@@ -11,5 +11,15 @@ b = np.ones((5,5))
 b[1:-1, 1:-1] = 0
 b[2,2] = 9
 
+c = b[b==1]
+
+d = np.hstack([[[1,1], [3,4]], [[5,5], [5,5]]])
+
+e = d.copy()
+e = e.reshape((1,8))
+
 print(a)
 print(b)
+print(c)
+print(d)
+print(e)
