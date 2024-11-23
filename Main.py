@@ -22,7 +22,7 @@ def redrawAll(app):
     drawRect(100, 100, 100, 50)
 
 def addTile(app, x,y):
-    newScreenData = np.asarray(app.img).copy()
+    newScreenData = np.asarray(app.img, dtype = np.int8).copy()
     rows = len(app.tileData)
     cols = len(app.tileData[0])
 
@@ -50,13 +50,19 @@ def loadScreen(app, img):
 
     return img
 
+def drawThing(app,img, i):
+    array = np.asarray(img).copy()
+    array[50:300, :] = (100,0,0)
+    updateScreen(app, Image.fromarray(array, mode = "RGB"))
+
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
         addTile(app, 100*(int(key)-1),0)
         # app.imageColor = app.colors[int(key)-1]
         # app.img = Image.new(mode = "RGB", size = (app.width,app.height), color = app.imageColor)
         # updateScreen(app,app.img)
-    
+    if key == '5':
+        drawThing(app,app.img,0)
 
 runApp()
 

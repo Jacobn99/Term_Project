@@ -14,7 +14,6 @@ def onAppStart(app):
     
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
-    drawRect(100, 100, 100, 50)
 
 def updateScreen(app, img):
     loadScreen(app,img = img)
