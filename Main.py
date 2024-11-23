@@ -2,6 +2,7 @@ from cmu_graphics import *
 from PIL import Image
 import numpy as np
 from sprite import SpriteDrawer, Sprite
+from map_render import MapRenderer
 
 
 def onAppStart(app):
@@ -19,7 +20,6 @@ def onAppStart(app):
     
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
-    drawRect(100, 100, 100, 50)
 
 def loadScreen(app, img):
     if img == None:
@@ -30,9 +30,7 @@ def loadScreen(app, img):
 
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
-        sprite = Sprite(app.tileImage, app.spriteDrawer)
-        sprite.drawSprite(100*(int(key)-1),0)
-        # app.spriteDrawer.drawSprite(app.tileImage, 100*(int(key)-1),0)
-
+        tile = Sprite(app.tileImage, app.spriteDrawer)
+        MapRenderer.render(tile, (app.width,app.height), (8,8))
 runApp()
 

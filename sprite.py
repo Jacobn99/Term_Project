@@ -7,6 +7,7 @@ class Sprite():
         self.img = img
         self.width, self.height, self.data = Sprite.getSpriteData(self.img)
         self.spriteDrawer = spriteDrawer
+        print(self.width, self.height)
 
     def updateSprite(self, newSprite):
         self.width, self.height, self.data = Sprite.getSpriteData(newSprite)
@@ -23,7 +24,7 @@ class Sprite():
     @staticmethod
     def getSpriteData(img):
         data = np.asarray(img)
-        return len(data), len(data[0]), data
+        return len(data[0]), len(data), data
 
 class SpriteDrawer:
     ignorableColor = [255,255,255]
@@ -36,14 +37,19 @@ class SpriteDrawer:
 
     def drawSprite(self, sprite, x, y):
         screenData = np.asarray(self.screen).copy()
+        screenWidth = len(screenData)
+        screenHeight = len(screenData[0])
+
         spriteData = sprite.getData()
         
-        rows, cols = sprite.getSize()
+        cols, rows = sprite.getSize()
 
         for row in range(rows):
-            for col in range(cols):
-                if spriteData[row,col][:-1].tolist() != SpriteDrawer.ignorableColor:
-                    screenData[y + row, x + col] = spriteData[row,col][:-1]
+            if(0<=y+row<=screenWidth-1):
+                for col in range(cols):
+                    if (0<=x+col<=screenHeight-1 and
+                        spriteData[row,col][:-1].tolist() != SpriteDrawer.ignorableColor):
+                        screenData[y + row, x + col] = spriteData[row,col][:-1]
         newScreen = Image.fromarray(screenData, mode = "RGB")
         self.updateScreen(newScreen)
 
