@@ -3,11 +3,10 @@ from PIL import Image
 import numpy as np
 
 class Sprite():
-    def __init__(self, img, spriteDrawer):
+    def __init__(self, img):
         self.img = img
         self.width, self.height, self.data = Sprite.getSpriteData(self.img)
-        self.spriteDrawer = spriteDrawer
-        print(self.width, self.height)
+        # self.spriteDrawer = spriteDrawer
 
     def updateSprite(self, newSprite):
         self.width, self.height, self.data = Sprite.getSpriteData(newSprite)
@@ -18,8 +17,8 @@ class Sprite():
     def getData(self):
         return self.data
     
-    def drawSprite(self, x, y):
-        self.spriteDrawer.drawSprite(self, x,y)
+    # def drawSprite(self, x, y):
+    #     self.spriteDrawer.drawSprite(self, x,y)
     
     @staticmethod
     def getSpriteData(img):
@@ -49,7 +48,7 @@ class SpriteDrawer:
                 for col in range(cols):
                     if (0<=x+col<=screenHeight-1 and
                         spriteData[row,col][:-1].tolist() != SpriteDrawer.ignorableColor):
-                        screenData[y + row, x + col] = spriteData[row,col][:-1]
+                        screenData[y + row, x + col][:3] = spriteData[row,col][:3]
         newScreen = Image.fromarray(screenData, mode = "RGB")
         self.updateScreen(newScreen)
 
