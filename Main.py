@@ -2,7 +2,9 @@ from cmu_graphics import *
 from PIL import Image
 import numpy as np
 from sprite import SpriteDrawer, Sprite
-from map_render import MapRenderer, Tile
+from map_render import MapRenderer
+from tiles import Tile
+
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
 # (edit the map being used with numpy to include only what you can see)
@@ -32,8 +34,8 @@ def loadScreen(app, img):
 
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
-        tile = Tile(Tile.getSpriteByName('empty'))
-        #Tile.changeTileBorder(tile, [100,0,0])
+        tile = Tile(Sprite(app.tileImage))
+        Tile.changeTileBorder(tile, [100,0,0])
 
         map = MapRenderer.generateRepeatMap(tile, (15,15))
         MapRenderer.render(map, (app.width,app.height), app.spriteDrawer, tile.getSize())

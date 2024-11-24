@@ -5,8 +5,8 @@ import numpy as np
 class Sprite():
     def __init__(self, img):
         self.img = img
+        self.data = np.asarray(img)[:,:,:3].copy()
         self.width, self.height, self.data = Sprite.getSpriteData(self.img)
-        # self.spriteDrawer = spriteDrawer
 
     def updateSprite(self, newSprite):
         self.width, self.height, self.data = Sprite.getSpriteData(newSprite)
@@ -15,7 +15,19 @@ class Sprite():
         return (self.width, self.height)
 
     def getData(self):
-        return self.data
+        return self.data[:,:,:3].copy()
+    
+    def getImage(self):
+        return Image.open(self.img.filename)
+    
+    def __eq__(self,other):
+        return isinstance(other, Sprite) and self.img == other.img
+    
+    def __repr__(self):
+        return f'Sprite({self.img.filename})'
+
+    def __hash__(self):
+        return hash(str(self))
     
     # def drawSprite(self, x, y):
     #     self.spriteDrawer.drawSprite(self, x,y)
