@@ -35,9 +35,17 @@ class MapRenderer:
                     spriteDrawer.drawSprite(tile, startX + screenX, startY + screenY)
     
     @staticmethod
-    def generateRepeatMap(tile, size):
+    def generateRepeatMap(sprite, size):
         rows = size[0]
         cols = size[1]
-        map = np.repeat(tile, rows*cols)
+        mapList = []
+
+        for row in range(rows):
+            for col in range(cols):
+                mapList.append(Tile(sprite, row, col))
+                # map = np.repeat(tile, rows*cols)
+        map = np.array(mapList)
         map = map.reshape(rows,cols)
+
+        mapList = None
         return map

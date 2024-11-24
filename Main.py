@@ -17,6 +17,7 @@ def onAppStart(app):
     app.imgName = "screen"
     app.img = loadScreen(app, None)
     app.colors = [(100,0,0), (0,100,0), (0,0,100)]
+    app.map = np.array([])
 
     app.ignorableColor = (255,255,255)
     app.tileImage = Image.open("sprites/TileShape.png")
@@ -34,10 +35,14 @@ def loadScreen(app, img):
 
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
-        tile = Tile(Sprite(app.tileImage))
-        Tile.changeTileBorder(tile, [100,0,0])
+        tileSprite = Sprite(app.tileImage)
 
-        map = MapRenderer.generateRepeatMap(tile, (15,15))
-        MapRenderer.render(map, (app.width,app.height), app.spriteDrawer, tile.getSize())
+        app.map = MapRenderer.generateRepeatMap(tileSprite, (15,15)) 
+        MapRenderer.render(app.map, (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    if key == 'h':
+        if app.map.size != 0:
+            t = app.map[2,2]
+            Tile.changeTileBorder(t, [255,0,0])
+            Tile.redrawTile(t, app.spriteDrawer)
 runApp()
 

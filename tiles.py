@@ -1,7 +1,6 @@
 from PIL import Image
 import numpy as np
-from sprite import SpriteDrawer, Sprite
-
+from sprite import Sprite
 
 class Tile:
     # Making references to default tileSprites so that they are cached unless they are modified
@@ -9,8 +8,10 @@ class Tile:
     defaultSprites = {'empty' : Sprite(img1)}
     defaultBorderColor = [0,0,0]
 
-    def __init__(self, sprite):
+    def __init__(self, sprite, x, y):
         self.sprite = sprite
+        self.x = x # col in map
+        self.y = y # row in map
 
     # Changes sprite without making an alias
     def changeSprite(self, newSprite):
@@ -43,3 +44,17 @@ class Tile:
         if name in Tile.defaultSprites:
             return Tile.defaultSprites[name]
         else: return None
+
+    @staticmethod
+    def redrawTile(tile, spriteDrawer):
+        screenX, screenY = Tile.mapToScreenCords(tile.getSize(), tile.x, tile.y)
+        spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
+
+    @staticmethod
+    def mapToScreenCords(tileSize, mapX, mapY):
+        tileWidth = tileSize[0]
+        tileHeight = tileSize[1]
+        screenX = (mapY - mapX) * tileWidth//2;
+        screenY = (mapY + mapX) * tileHeight//2;
+
+        return screenX, screenY

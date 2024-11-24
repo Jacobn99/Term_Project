@@ -8,8 +8,9 @@ class Sprite():
         self.data = np.asarray(img)[:,:,:3].copy()
         self.width, self.height, self.data = Sprite.getSpriteData(self.img)
 
-    def updateSprite(self, newSprite):
-        self.width, self.height, self.data = Sprite.getSpriteData(newSprite)
+    def updateSprite(self, newImg):
+        self.width, self.height, self.data = Sprite.getSpriteData(newImg)
+        self.img = newImg
 
     def getSize(self):
         return (self.width, self.height)
