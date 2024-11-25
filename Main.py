@@ -21,6 +21,8 @@ def onAppStart(app):
     app.map = np.array([])
     app.prevHoveredTileLoc = None
     app.mapRenderer = MapRenderer()
+    app.currentViewX = None
+    app.currentViewY = None
 
     app.ignorableColor = (255,255,255)
     app.tileImage = Image.open("sprites/TileShape.png")
@@ -30,7 +32,7 @@ def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
 
 def onMouseMove(app, mouseX,mouseY):
-    mapLoc = getTile(mouseX, mouseY, (app.width,app.height), app.map)
+    mapLoc = getTile(mouseX, mouseY, (app.width,app.height), app.map, True)
 
     if mapLoc != app.prevHoveredTileLoc and app.prevHoveredTileLoc != None: 
         Tile.changeHighlight(app.map[app.prevHoveredTileLoc[0], app.prevHoveredTileLoc[1]], app.map, 
@@ -41,6 +43,7 @@ def onMouseMove(app, mouseX,mouseY):
         Tile.changeHighlight(app.map[app.prevHoveredTileLoc[0], app.prevHoveredTileLoc[1]], app.map, 
                              app.mapRenderer, (app.width,app.height), app.spriteDrawer)
 
+
 def loadScreen(app, img):
     if img == None:
         img = Image.new(mode = "RGB", size = (app.width,app.height), color = app.imageColor)
@@ -48,7 +51,7 @@ def loadScreen(app, img):
 
     return img
 
-def getTile(mouseX, mouseY, screenSize, map):
+def getTile(mouseX, mouseY, screenSize, map, onlyRendered = False):
     if map.size == 0: return None
     else:
         tile0 = map[0,0]
@@ -60,21 +63,47 @@ def getTile(mouseX, mouseY, screenSize, map):
         row = math.floor((mouseX - startX)/tileWidth + (mouseY - startY)/tileHeight) + 1
         col = math.floor((mouseY - startY)/tileHeight - (mouseX - startX)/tileWidth)
 
+        if onlyRendered and (row, col) not in Tile.renderedTilesSet: return None
         if 0<=row<len(map) and 0<=col<len(map[0]): return row,col
         else: return None
     
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
         tileSprite = Sprite(app.tileImage)
-        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, tileSprite, (10,10))
+        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, tileSprite, (20,20))
         app.map[0,0].changeSprite(Tile.defaultSprites['green_tile'])
-        mapStartX, mapStartY = getTile(app.width//2, app.height//2,(app.width,app.height), app.map)
+        app.currentViewX, app.currentViewY = getTile(app.width//2, app.height//2,(app.width,app.height), app.map)
 
-        MapRenderer.render(app.map, (mapStartX, mapStartY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
-    if key == 'h':
+        MapRenderer.render(app.map, (app.currentViewX, app.currentViewY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    elif key == 'h':
         if app.map.size != 0:
             t = app.map[5,5]
             Tile.changeTileBorder(t, [255,0,0])
             Tile.redrawTile(t, app.spriteDrawer, (app.width,app.height), app.map, app.mapRenderer)
+
+    elif key == 'up' and app.map.size!=0:
+        tileSprite = Sprite(app.tileImage)
+        app.currentViewY += 1
+        clearScreen(app)
+        MapRenderer.render(app.map, (app.currentViewX, app.currentViewY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    elif key == 'down' and app.map.size!=0:
+        tileSprite = Sprite(app.tileImage)
+        app.currentViewY -=1
+        clearScreen(app)
+        MapRenderer.render(app.map, (app.currentViewX, app.currentViewY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    elif key == 'right' and app.map.size!=0:
+        tileSprite = Sprite(app.tileImage)
+        app.currentViewX += 1
+        clearScreen(app)
+        MapRenderer.render(app.map, (app.currentViewX, app.currentViewY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    elif key == 'left' and app.map.size!=0:
+        tileSprite = Sprite(app.tileImage)
+        app.currentViewY -= 1
+        clearScreen(app)
+        MapRenderer.render(app.map, (app.currentViewX, app.currentViewY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+    
+def clearScreen(app):
+    app.img = loadScreen(app, None)
+
 runApp()
 

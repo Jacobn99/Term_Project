@@ -6,6 +6,7 @@ from tiles import Tile
 class MapRenderer:
     @staticmethod
     def render(map, viewMapLoc, screenSize, spriteDrawer, tileSize):
+        Tile.renderedTilesSet = set()
         renderedMap = MapRenderer.getRenderedMap(map, viewMapLoc, screenSize, tileSize)
         renderedRows = len(renderedMap.tileList)
         
@@ -15,24 +16,39 @@ class MapRenderer:
 
         startX,startY = MapRenderer.getMapStartLocation(screenSize,tileSize, renderedRows)
 
+        # print((renderedMap.lowerX, renderedMap.upperX), (renderedMap.lowerY, renderedMap.upperY))
+        relativeRow = 0
+        relativeCol = 0
         for row in range(renderedMap.lowerY, renderedMap.upperY):
+            relativeCol = 0
             for col in range(renderedMap.lowerX, renderedMap.upperX):
-                tile = map[row,col].getSprite()
+                tile = map[row,col]
+                tileSprite = tile.getSprite()
+                
+                screenX = (relativeRow - relativeCol) * tileWidth//2;
+                screenY = (relativeRow + relativeCol) * tileHeight//2;
+                # print(f'map: {(row,col)}, screen: {screenX,screenY}')
 
-                screenX = (row - col) * tileWidth//2;
-                screenY = (row + col) * tileHeight//2;
 
                 if -tileWidth<=startX + screenX<=screenWidth + tileWidth and -tileHeight<=startY + screenY<=screenHeight + tileHeight:
-                    spriteDrawer.drawSprite(tile, startX + screenX, startY + screenY)
+                    Tile.renderedTilesSet.add((row,col))
+
+                    spriteDrawer.drawSprite(tileSprite, startX + screenX, startY + screenY)
+                relativeCol+=1
+
+            relativeRow+=1
     
     def generateRepeatMap(self, sprite, size):
         rows = size[0]
         cols = size[1]
         mapList = []
 
+        tileSprites = (sprite, Tile.defaultSprites['green_tile'])
+        i = 0
         for row in range(rows):
             for col in range(cols):
-                mapList.append(Tile(self,sprite, row, col))
+                mapList.append(Tile(self,tileSprites[i%2], row, col))
+                i+=1
         map = np.array(mapList)
         map = map.reshape(rows,cols)
 
@@ -52,8 +68,8 @@ class MapRenderer:
 
         # Adding/subtracting tileWidth//2 and tileHeight//2 because program draws tiles from edge, not center
         startX = middleX-((xEdgeTilesToCenter//2)*tileWidth) + tileWidth//2
-
         startY = middleY-((mapRows//2)*tileHeight) - tileHeight//2
+
         return startX,startY
     
     @staticmethod
@@ -62,43 +78,37 @@ class MapRenderer:
         rows,cols = len(map), len(map[0])
 
         x, y = viewMapLoc
-        renderedRows, renderedCols = MapRenderer.getViewSize(map, screenSize, tileSize)
+        renderedRows, renderedCols = 8,8
 
-        xLowerBound = x - renderedCols
-        yLowerBound = y - renderedRows
-        xUpperBound = x + renderedCols
-        yUpperBound = x + renderedRows
+        # renderedRows, renderedCols = MapRenderer.getViewSize(map, screenSize, tileSize)
+
+        xLowerBound = x - renderedCols//2
+        yLowerBound = y - renderedRows//2
+        xUpperBound = x + renderedCols//2
+        yUpperBound = x + renderedRows//2
 
         xLowerBound = max(0, xLowerBound)
         yLowerBound = max(0, yLowerBound)
         xUpperBound = min(cols, xUpperBound)
         yUpperBound = min(rows, yUpperBound)
         
-        print(m[xLowerBound:x + renderedCols, yLowerBound: y + renderedRows])
-        print("renderedSize:", (renderedRows, renderedCols), "bounds:", (xLowerBound, x + renderedCols), (yLowerBound, y + renderedRows))
-        renderedMap = Map(map[xLowerBound:xUpperBound, yLowerBound: yUpperBound], 
+        # print("renderedSize:", (renderedRows, renderedCols), "bounds:", (xLowerBound, x + renderedCols), (yLowerBound, y + renderedRows))
+        renderedMap = Map(map[xLowerBound:xUpperBound, yLowerBound:yUpperBound], 
                           (xLowerBound, xUpperBound, yLowerBound, yUpperBound))
         m[xLowerBound:xUpperBound, yLowerBound: yUpperBound] = 1
-        print(m)
+        # print(m)
         return renderedMap
-    
-    @staticmethod 
-    def getViewSize(screenSize, tileSize):
-        tileWidth, tileHeight = tileSize
-        screenWidth, screenHeight = screenSize
-        rows = screenWidth//tileHeight
-        cols = screenHeight//tileWidth
-        return rows,cols
     
     @staticmethod
     def getViewSize(map, screenSize, tileSize):
         screenWidth, screenHeight = screenSize
         tileWidth, tileHeight = tileSize
         maxRows, maxCols = len(map), len(map[0])
-        print(screenSize, tileSize, maxRows, maxCols)
-        
+
         desiredRows = screenHeight//tileHeight
         desiredCols = screenWidth//tileWidth
+
+        # print(f'maxRows: {maxRows}, maxCols: {maxCols}, desiredRows: {desiredRows}, desiredCols: {desiredCols}')
 
         return min(desiredRows,maxRows), min(desiredCols,maxCols)
     

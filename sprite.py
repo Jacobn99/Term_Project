@@ -30,9 +30,6 @@ class Sprite():
     def __hash__(self):
         return hash(str(self))
     
-    # def drawSprite(self, x, y):
-    #     self.spriteDrawer.drawSprite(self, x,y)
-    
     @staticmethod
     def getSpriteData(img):
         data = np.asarray(img)
