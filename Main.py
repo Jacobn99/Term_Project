@@ -54,7 +54,6 @@ def getTile(mouseX, mouseY, screenSize, map):
         tile0 = map[0,0]
         tileWidth, tileHeight = tile0.getSize()
         startX,startY = MapRenderer.getMapStartLocation(screenSize, tile0.getSize(), len(map))
-        # assert(startY>=0)
 
         startX += tileWidth
         startY -= (-1 * tileHeight)//2
@@ -67,12 +66,14 @@ def getTile(mouseX, mouseY, screenSize, map):
 def onKeyPress(app,key):
     if key.isdigit() and 1 <=int(key) <= 3:
         tileSprite = Sprite(app.tileImage)
+        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, tileSprite, (10,10))
+        app.map[0,0].changeSprite(Tile.defaultSprites['green_tile'])
+        mapStartX, mapStartY = getTile(app.width//2, app.height//2,(app.width,app.height), app.map)
 
-        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, tileSprite, (20,20)) 
-        MapRenderer.render(app.map, (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+        MapRenderer.render(app.map, (mapStartX, mapStartY), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     if key == 'h':
         if app.map.size != 0:
-            t = app.map[0,0]
+            t = app.map[5,5]
             Tile.changeTileBorder(t, [255,0,0])
             Tile.redrawTile(t, app.spriteDrawer, (app.width,app.height), app.map, app.mapRenderer)
 runApp()

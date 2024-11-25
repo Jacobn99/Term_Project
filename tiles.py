@@ -4,8 +4,9 @@ from sprite import Sprite
 
 class Tile():
     # Making references to default tileSprites so that they are cached unless they are modified
-    img1 = Image.open("sprites/TileShape.png")
-    defaultSprites = {'empty' : Sprite(img1)}
+    tileShape = Image.open("sprites/TileShape.png")
+    greenTile = Image.open("sprites/green_tile.png")
+    defaultSprites = {'empty' : Sprite(tileShape), 'green_tile': Sprite(greenTile)}
     defaultBorderColor = [0,0,0]
     highlightColor = [255,0,0]
 
@@ -50,21 +51,14 @@ class Tile():
     @staticmethod
     def redrawTile(tile, spriteDrawer, screenSize, map, mapRenderer):
         screenX, screenY = Tile.mapToScreenCords((tile.x, tile.y), tile.getSize(),screenSize, map, mapRenderer)
-        # print(screenX,screenY)
         spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
 
     @staticmethod
     def mapToScreenCords(tileMapLoc, tileSize, screenSize, map, mapRenderer):
         tileWidth = tileSize[0]
         tileHeight = tileSize[1]
-
         mapX,mapY = tileMapLoc
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         startX, startY = mapRenderer.getMapStartLocation(screenSize, tileSize, len(map))
-        # assert(startY >=0)
-        print(startX,startY)
-        # print(startX,startY)
-
         screenX = (mapX - mapY) * tileWidth//2 + startX
         screenY = (mapX + mapY) * tileHeight//2 + startY
 
