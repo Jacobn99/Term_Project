@@ -10,12 +10,18 @@ class Tile():
     defaultBorderColor = [0,0,0]
     highlightColor = [255,0,0]
 
-    def __init__(self, mapRenderer,sprite, x, y):
+    def __init__(self, mapRenderer,sprite, row, col):
         self.sprite = sprite
         self.mapRenderer = mapRenderer
-        self.x = x # col in map
-        self.y = y # row in map
+        self.col = col # col in map
+        self.row = row # row in map
         self.isHighlighted = False
+
+    def __repr__(self):
+        return f'Tile(row:{self.row},col:{self.col})'
+    
+    def __eq__(self,other):
+        return isinstance(other, Tile) and self.col == other.col and self.row == other.row
 
     # Changes sprite without making an alias
     def changeSprite(self, newSprite):
@@ -49,27 +55,33 @@ class Tile():
         else: return None
 
     @staticmethod
-    def redrawTile(tile, spriteDrawer, screenSize, map, mapRenderer):
-        screenX, screenY = Tile.mapToScreenCords((tile.x, tile.y), tile.getSize(),screenSize, map, mapRenderer)
+    def redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer):
+        currentViewMapRow, currentViewMapCol = viewMapLoc
+        # relativeRow,relativeCol = mapRenderer.getRelativeMapLocation(currentViewMapRow, currentViewMapCol, tile.row, tile.col, map)
+        relativeRow = tile.row - currentViewMapRow
+        relativeCol = tile.col - currentViewMapCol
+        print(f'absRow: {tile.row}, absCol: {tile.col}, relativeRow: {relativeRow}, relativeCol: {relativeCol}')
+
+        screenX, screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, mapRenderer)
         spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
 
     @staticmethod
-    def mapToScreenCords(tileMapLoc, tileSize, screenSize, map, mapRenderer):
+    def mapToScreenCords(tileMapLoc, tileSize, screenSize, renderedMap, mapRenderer):
         tileWidth = tileSize[0]
         tileHeight = tileSize[1]
-        mapX,mapY = tileMapLoc
-        startX, startY = mapRenderer.getMapStartLocation(screenSize, tileSize, len(map))
-        screenX = (mapX - mapY) * tileWidth//2 + startX
-        screenY = (mapX + mapY) * tileHeight//2 + startY
+        mapRow,mapCol = tileMapLoc
+        startX, startY = mapRenderer.getMapStartLocation(screenSize, tileSize, len(renderedMap.tileList), len(renderedMap.tileList[0]))
+        screenX = (mapCol - mapRow) * tileWidth//2 + startX
+        screenY = (mapCol + mapRow) * tileHeight//2 + startY
 
         return screenX, screenY
     
     @staticmethod
-    def changeHighlight(tile, map, mapRenderer, screenSize, spriteDrawer):
+    def changeHighlight(tile, viewMapLoc, map, mapRenderer, screenSize, spriteDrawer):
         color = []
         if tile.isHighlighted: color = Tile.defaultBorderColor
         else: color = Tile.highlightColor    
 
         tile.isHighlighted = not tile.isHighlighted
         Tile.changeTileBorder(tile, color)
-        Tile.redrawTile(tile, spriteDrawer, screenSize, map, mapRenderer)
+        Tile.redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer)

@@ -57,7 +57,7 @@ class SpriteDrawer:
             if(0<=y+row<=screenWidth-1):
                 for col in range(cols):
                     if (0<=x+col<=screenHeight-1 and
-                        spriteData[row,col][:-1].tolist() != SpriteDrawer.ignorableColor):
+                        spriteData[row,col][:3].tolist() != SpriteDrawer.ignorableColor):
                         screenData[y + row, x + col][:3] = spriteData[row,col][:3]
         newScreen = Image.fromarray(screenData, mode = "RGB")
         self.updateScreen(newScreen)
