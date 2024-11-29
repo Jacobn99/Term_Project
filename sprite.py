@@ -38,27 +38,28 @@ class Sprite():
 class SpriteDrawer:
     ignorableColor = [255,255,255]
     
-    def __init__(self, screen, screenSize, screenName):
-        self.screen = screen
+    def __init__(self, app, screenSize, screenName):
+        self.app = app
         self.width = screenSize[0]
         self.height = screenSize
         self.screenName = screenName
 
-    def drawSprite(self, sprite, x, y):
-        screenData = np.asarray(self.screen).copy()
-        screenWidth = len(screenData)
-        screenHeight = len(screenData[0])
+    def drawSprite(self,sprite, x, y):
+        screenData = np.asarray(self.app.img)[:,:,:3].copy()
+        screenWidth = len(screenData[0])
+        screenHeight = len(screenData)
         spriteData = sprite.getData()
         x = int(x)
         y = int(y)        
         cols, rows = sprite.getSize()
 
         for row in range(rows):
-            if(0<=y+row<=screenWidth-1):
+            if(0<=y+row<screenHeight):
                 for col in range(cols):
-                    if (0<=x+col<=screenHeight-1 and
+                    if (0<=x+col<screenWidth and
                         spriteData[row,col][:3].tolist() != SpriteDrawer.ignorableColor):
                         # print(row,col)
+                        # print("bonga")
                         screenData[y + row, x + col][:3] = spriteData[row,col][:3]
 
                         # try:
@@ -71,7 +72,8 @@ class SpriteDrawer:
         self.updateScreen(newScreen)
 
     def updateScreen(self, newScreen):
-        if(newScreen != None): self.screen = newScreen
+        # screen = self.app.img
+        if(newScreen != None): self.app.img = newScreen
         self.loadScreen(newScreen)
 
     def loadScreen(self, img):

@@ -5,6 +5,7 @@ from sprite import SpriteDrawer, Sprite
 from map_render import MapRenderer, Map
 from tiles import Tile
 import math
+import os
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
@@ -31,7 +32,7 @@ def onAppStart(app):
 
     app.ignorableColor = (255,255,255)
     app.tileImage = Image.open("sprites/TileShape.png")
-    app.spriteDrawer = SpriteDrawer(app.img, (app.width,app.height), app.imgName)
+    app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
     
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
@@ -48,6 +49,8 @@ def onMouseMove(app, mouseX,mouseY):
     if mapLoc != None and mapLoc != app.prevHoveredTileLoc:
         row, col = mapLoc
         app.prevHoveredTileLoc = (row,col)
+        t = app.map.tileList[row,col]
+        print(t, (t.row,t.col))
         Tile.changeHighlight(app.map.tileList[row, col], (app.currentViewRow, app.currentViewCol), 
                              app.map, app.mapRenderer, (app.width,app.height), app.spriteDrawer)
         
@@ -81,8 +84,8 @@ def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
     relativeRow = row
     relativeCol = col
     if(app.currentViewCol != None and app.currentViewRow != None):
-        row += app.currentViewRow
-        col += app.currentViewCol
+        row += app.currentViewRow - (len(map.tileList)//2)
+        col += app.currentViewCol - (len(map.tileList[0])//2)
        
     if onlyRendered and ((0 > relativeRow or relativeRow>=len(renderedMap.tileList)) or 
                          (0 > relativeCol or relativeCol>=len(renderedMap.tileList[0]))): return None
@@ -130,12 +133,12 @@ def onKeyPress(app,key):
 
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
-        app.currentViewRow -= 1
+        app.currentViewRow += 1
         clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'down' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
-        app.currentViewRow +=1
+        app.currentViewRow -=1
         clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'right' and app.map.tileList.size!=0:
@@ -150,6 +153,13 @@ def onKeyPress(app,key):
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     
 def clearScreen(app):
+    # a = np.asarray(app.img).copy()[:,:,:3]
+    # a[:,:] = [255,255,255]
+    # newImg = Image.fromarray(a, mode = "RGB")
+    # app.img = newImg
+    # os.remove(f'{app.imgName}.jpg')
+    # app.img.save(f'{app.imgName}.jpg')
+    
     app.img = loadScreen(app, None)
 
 runApp()

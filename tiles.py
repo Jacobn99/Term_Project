@@ -23,10 +23,11 @@ class Tile():
     def __eq__(self,other):
         return isinstance(other, Tile) and self.col == other.col and self.row == other.row
 
+    def __hash__(self):
+        return hash(str(self))
     # Changes sprite without making an alias
     def changeSprite(self, newSprite):
         self.sprite = newSprite
-
     def getSprite(self):
         return self.sprite
     
@@ -58,8 +59,8 @@ class Tile():
     def redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer):
         currentViewMapRow, currentViewMapCol = viewMapLoc
         # relativeRow,relativeCol = mapRenderer.getRelativeMapLocation(currentViewMapRow, currentViewMapCol, tile.row, tile.col, map)
-        relativeRow = tile.row - currentViewMapRow
-        relativeCol = tile.col - currentViewMapCol
+        relativeRow = tile.row - (currentViewMapRow - len(map.tileList)//2)
+        relativeCol = tile.col - (currentViewMapCol - len(map.tileList[0])//2)
         # print(f'absRow: {tile.row}, absCol: {tile.col}, relativeRow: {relativeRow}, relativeCol: {relativeCol}')
 
         screenX, screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, mapRenderer)
