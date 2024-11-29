@@ -7,11 +7,14 @@ class MapRenderer:
     @staticmethod
     def render(map, app, viewMapLoc, screenSize, spriteDrawer, tileSize):
         tileList = map.tileList
+        viewMapRow, viewMapCol = viewMapLoc
         renderedMap = MapRenderer.createRenderedMap(map, app, viewMapLoc, screenSize, tileSize)
         renderedRows = len(renderedMap.tileList)
-        renderedCols = len(renderedMap.tileList[0])
-        
+        renderedCols = len(renderedMap.tileList[0])        
         tileWidth, tileHeight = tileSize[0], tileSize[1]
+        tileWidthHalf = tileWidth//2
+        tileHeightHalf = tileHeight//2
+
         screenWidth = screenSize[0]
         screenHeight = screenSize[1]
 
@@ -22,22 +25,25 @@ class MapRenderer:
         relativeCol = 0
         m = np.zeros((len(tileList), len(tileList[0])))
 
-        print("upperY-lowerY:", renderedMap.upperY - renderedMap.lowerY)
-        print("upperX-lowerX:", renderedMap.upperX - renderedMap.lowerX)
+        print(f"lowerY: {renderedMap.lowerY}, upperY: {renderedMap.upperY}")
+        print(f"lowerX: {renderedMap.lowerX}, upperX: {renderedMap.upperX}")
+        
+        renderer = MapRenderer()
 
         # --------- this code still breaks things ---------
-        for relativeRow in range(len(renderedMap.tileList)):
-            for relativeCol in range(len(renderedMap.tileList[0])):
-                realRow = relativeRow + renderedMap.lowerY
-                realCol = relativeCol + renderedMap.lowerX
-                tile = tileList[realRow,realCol]
+        for relativeRow in range(renderedRows):
+            for relativeCol in range(renderedCols):
+                # print(relativeRow,relativeCol)
+                realRow = relativeRow + viewMapRow
+                realCol = relativeCol + viewMapCol
+                # tile = tileList[realRow,realCol]
+                tile = renderedMap.tileList[relativeRow, relativeCol]
                 tileSprite = tile.getSprite()
+                screenX,screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, renderer)
                 
-                screenX = (relativeRow - relativeCol) * tileWidth//2;
-                screenY = (relativeRow + relativeCol) * tileHeight//2;
-
+                # print(screenX,screenY)
                 if -tileWidth<=startX + screenX<=screenWidth + tileWidth and -tileHeight<=startY + screenY<=screenHeight + tileHeight:
-                    spriteDrawer.drawSprite(tileSprite, startX + screenX, startY + screenY)
+                    spriteDrawer.drawSprite(tileSprite, screenX, screenY)
                 relativeCol+=1
 
         # for row in range(renderedMap.lowerY, renderedMap.upperY):
@@ -67,7 +73,8 @@ class MapRenderer:
         i = 0
         for row in range(rows):
             for col in range(cols):
-                mapList.append(Tile(self,tileSprites[i%2], row, col))
+                #mapList.append(Tile(self,tileSprites[i%2], row, col))
+                mapList.append(Tile(self,tileSprites[0],row,col))
                 i+=1
         m = np.array(mapList)
         map = Map(m.reshape(rows,cols), (0, row, 0, cols))
@@ -108,7 +115,8 @@ class MapRenderer:
         # m = np.zeros((len(tileList), len(tileList[0])))
         rows,cols = len(tileList), len(tileList[0])
 
-        x, y = viewMapLoc
+        y, x = viewMapLoc
+        print(f'x:{x},y:{y}')
         renderedRows, renderedCols = app.viewRowSize, app.viewColSize
 
         # renderedRows, renderedCols = MapRenderer.getViewSize(map, screenSize, tileSize)

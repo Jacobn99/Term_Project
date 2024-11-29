@@ -26,7 +26,7 @@ def onAppStart(app):
     app.currentViewCol = None # From top left cornerer
     app.currentViewRow = None # From top left cornerer
     app.renderedMap = None
-    app.viewRowSize = 8
+    app.viewRowSize = 4
     app.viewColSize = 8
 
     app.ignorableColor = (255,255,255)
@@ -86,8 +86,10 @@ def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
        
     if onlyRendered and ((0 > relativeRow or relativeRow>=len(renderedMap.tileList)) or 
                          (0 > relativeCol or relativeCol>=len(renderedMap.tileList[0]))): return None
+    if 0 <= row < len(map.tileList) and 0 <= col <len(map.tileList[0]): return row, col
+    else: return None
     # return renderedMap.tileList[relativeRow,relativeCol].row, renderedMap.tileList[relativeRow,relativeCol].col
-    return row, col
+    # return row, col
 
 def getRelativeTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
     if map == None: return None
@@ -119,7 +121,7 @@ def onKeyPress(app,key):
         app.currentViewRow, app.currentViewCol = getTile(app, app.width//2, app.height//2,(app.width,app.height), app.map)
 
 
-        app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewCol, app.currentViewRow), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
+        app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewRow,app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'h':
         if app.map.size != 0:
             t = app.map[5,5]

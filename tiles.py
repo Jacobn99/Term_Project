@@ -60,19 +60,21 @@ class Tile():
         # relativeRow,relativeCol = mapRenderer.getRelativeMapLocation(currentViewMapRow, currentViewMapCol, tile.row, tile.col, map)
         relativeRow = tile.row - currentViewMapRow
         relativeCol = tile.col - currentViewMapCol
-        print(f'absRow: {tile.row}, absCol: {tile.col}, relativeRow: {relativeRow}, relativeCol: {relativeCol}')
+        # print(f'absRow: {tile.row}, absCol: {tile.col}, relativeRow: {relativeRow}, relativeCol: {relativeCol}')
 
         screenX, screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, mapRenderer)
         spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
 
     @staticmethod
     def mapToScreenCords(tileMapLoc, tileSize, screenSize, renderedMap, mapRenderer):
-        tileWidth = tileSize[0]
-        tileHeight = tileSize[1]
+        tileWidthHalf = tileSize[0]/2
+        tileHeightHalf = tileSize[1]/2
         mapRow,mapCol = tileMapLoc
         startX, startY = mapRenderer.getMapStartLocation(screenSize, tileSize, len(renderedMap.tileList), len(renderedMap.tileList[0]))
-        screenX = (mapCol - mapRow) * tileWidth//2 + startX
-        screenY = (mapCol + mapRow) * tileHeight//2 + startY
+        screenX = (mapCol - mapRow) * tileWidthHalf+ startX
+        screenY = (mapCol + mapRow) * tileHeightHalf + startY
+        # screenX = (mapCol/tileWidthHalf + mapRow/tileHeightHalf)//2
+        # screenY = ((mapRow/tileHeightHalf) - (mapCol/tileWidthHalf))//2;
 
         return screenX, screenY
     

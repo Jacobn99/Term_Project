@@ -48,9 +48,9 @@ class SpriteDrawer:
         screenData = np.asarray(self.screen).copy()
         screenWidth = len(screenData)
         screenHeight = len(screenData[0])
-
         spriteData = sprite.getData()
-        
+        x = int(x)
+        y = int(y)        
         cols, rows = sprite.getSize()
 
         for row in range(rows):
@@ -58,7 +58,15 @@ class SpriteDrawer:
                 for col in range(cols):
                     if (0<=x+col<=screenHeight-1 and
                         spriteData[row,col][:3].tolist() != SpriteDrawer.ignorableColor):
+                        # print(row,col)
                         screenData[y + row, x + col][:3] = spriteData[row,col][:3]
+
+                        # try:
+                        #     screenData[y + row, x + col][:3] = spriteData[row,col][:3]
+                        # except:
+                        #     print(row,col)
+                        #     print(f"Data is set to None: screenDataSize = {(len(screenData), len(screenData[0]))}, spriteDataSize = {(len(spriteData), len(spriteData[0]))}")
+
         newScreen = Image.fromarray(screenData, mode = "RGB")
         self.updateScreen(newScreen)
 
