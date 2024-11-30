@@ -1,11 +1,14 @@
+from typing import List
 from cmu_graphics import *
 from PIL import Image
 import numpy as np
 from sprite import SpriteDrawer, Sprite
 from map_render import MapRenderer, Map
+from settlement import Settlement
+from player_civilization import Civilization
 from tiles import Tile
 import math
-import os
+from materials import MaterialIcon
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
@@ -20,26 +23,39 @@ def onAppStart(app):
     app.img = loadScreen(app, None)
     app.colors = [(100,0,0), (0,100,0), (0,0,100)]
     app.map = None
-    app.mapRows = 15
-    app.mapCols = 15
+    app.mapRows = 30
+    app.mapCols = 30
     app.prevHoveredTileLoc = None
     app.mapRenderer = MapRenderer()
-    app.currentViewCol = None # From top left cornerer
-    app.currentViewRow = None # From top left cornerer
+    app.currentViewCol = None # From top left corner
+    app.currentViewRow = None # From top left corner
     app.renderedMap = None
-    app.viewRowSize = 4
+    app.viewRowSize = 8
     app.viewColSize = 8
 
     app.ignorableColor = (255,255,255)
     app.tileImage = Image.open("sprites/TileShape.png")
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
-    
+    app.currentTile = None
+    app.materialIcons = set()
+
+    app.players = [Civilization()]
+
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
+    drawResourceIcons(app)
+
+def drawResourceIcons(app):
+    for icon in app.materialIcons:
+        imgX, imgY = icon.getImageLoc()
+        labelX, labelY = icon.getLabelLoc(imgX,imgY)
+        # print(imgX, imgY)
+        drawImage(icon.imagePath, imgX, imgY)
+        drawLabel(icon.getAmount(), labelX, labelY)
+                
 
 def onMouseMove(app, mouseX,mouseY):
     mapLoc = getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
-    # print(mapLoc)
 
     if mapLoc != app.prevHoveredTileLoc and app.prevHoveredTileLoc != None: 
         prevRow, prevCol = app.prevHoveredTileLoc
@@ -48,6 +64,7 @@ def onMouseMove(app, mouseX,mouseY):
         app.prevHoveredTileLoc = None
     if mapLoc != None and mapLoc != app.prevHoveredTileLoc:
         row, col = mapLoc
+        app.currentTile = (row,col)
         app.prevHoveredTileLoc = (row,col)
         t = app.map.tileList[row,col]
         print(t, (t.row,t.col))
@@ -66,21 +83,14 @@ def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
     if map == None: return None
     if map.tileList.size == 0: return None
 
-    tileList = map.tileList
-    rows, cols = len(tileList), len(tileList[0])
-
-    loc = getRelativeTile(app, mouseX, mouseY, screenSize, map, onlyRendered)
+    loc = getRelativeTile(mouseX, mouseY, screenSize, map)
     if loc == None: return None
-    # print('got here')
-
-    # print(f'original: {loc}')
-
     row, col = loc
 
     renderedMap = map.getRenderedMap()
     if renderedMap == None: renderedMap = map
 
-    row,col = getRelativeTile(app, mouseX, mouseY, screenSize, map, onlyRendered)
+    row,col = getRelativeTile(mouseX, mouseY, screenSize, map)
     relativeRow = row
     relativeCol = col
     if(app.currentViewCol != None and app.currentViewRow != None):
@@ -91,16 +101,13 @@ def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
                          (0 > relativeCol or relativeCol>=len(renderedMap.tileList[0]))): return None
     if 0 <= row < len(map.tileList) and 0 <= col <len(map.tileList[0]): return row, col
     else: return None
-    # return renderedMap.tileList[relativeRow,relativeCol].row, renderedMap.tileList[relativeRow,relativeCol].col
-    # return row, col
 
-def getRelativeTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
+def getRelativeTile(mouseX, mouseY, screenSize, map):
     if map == None: return None
     if map.tileList.size == 0: return None
     else:
         renderedMap = map.getRenderedMap()
         if renderedMap == None: renderedMap = map
-        # tileList = map.tileList
         tile0 = map.tileList[0,0]
         tileWidth, tileHeight = tile0.getSize()
 
@@ -117,19 +124,37 @@ def getRelativeTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
         return x,y
     
 def onKeyPress(app,key):
-    if key.isdigit() and 1 <=int(key) <= 3:
+    if key == 'r':
         tileSprite = Sprite(app.tileImage)
-        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, tileSprite, (app.mapRows,app.mapCols))
+        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, (app.mapRows,app.mapCols), None)
+
         app.map.tileList[0,0].changeSprite(Tile.defaultSprites['green_tile'])
+        app.materialIcons.add(MaterialIcon(app.map.tileList[0,0], app, "sprites/small_gear.png"))
+
         app.currentViewRow, app.currentViewCol = getTile(app, app.width//2, app.height//2,(app.width,app.height), app.map)
-
-
         app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewRow,app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
-    elif key == 'h':
-        if app.map.size != 0:
-            t = app.map[5,5]
-            Tile.changeTileBorder(t, [255,0,0])
-            Tile.redrawTile(t, (app.currentViewRow, app.currentViewCol), app.spriteDrawer, (app.width,app.height), app.map, app.mapRender)
+    elif key == 's':
+        if app.currentTile != None:
+            row,col = app.currentTile
+            settlement = Settlement(app, app.map.tileList[row,col], app.mapRenderer)
+            # Settlement.colorSettlementTiles(app, settlement)
+            settlement.instantiate()
+            app.players[0].addSettlement(settlement)
+            print(len(app.players[0].settlements))
+    elif key == 'a':
+        if app.currentTile != None:    
+            row,col = app.currentTile
+            tile = app.map.tileList[row,col]
+            print(tile.getType())
+
+    elif key.isdigit() and 1 <=int(key) <= 3:
+        if app.currentTile != None:
+            types = List(Tile.tileTypes)    
+            row,col = app.currentTile
+            tile = app.map.tileList[row,col]
+            tile.setType(types[int(key) - 1])
+
+
 
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
@@ -153,13 +178,6 @@ def onKeyPress(app,key):
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     
 def clearScreen(app):
-    # a = np.asarray(app.img).copy()[:,:,:3]
-    # a[:,:] = [255,255,255]
-    # newImg = Image.fromarray(a, mode = "RGB")
-    # app.img = newImg
-    # os.remove(f'{app.imgName}.jpg')
-    # app.img.save(f'{app.imgName}.jpg')
-    
     app.img = loadScreen(app, None)
 
 runApp()

@@ -58,21 +58,11 @@ class SpriteDrawer:
                 for col in range(cols):
                     if (0<=x+col<screenWidth and
                         spriteData[row,col][:3].tolist() != SpriteDrawer.ignorableColor):
-                        # print(row,col)
-                        # print("bonga")
                         screenData[y + row, x + col][:3] = spriteData[row,col][:3]
-
-                        # try:
-                        #     screenData[y + row, x + col][:3] = spriteData[row,col][:3]
-                        # except:
-                        #     print(row,col)
-                        #     print(f"Data is set to None: screenDataSize = {(len(screenData), len(screenData[0]))}, spriteDataSize = {(len(spriteData), len(spriteData[0]))}")
-
         newScreen = Image.fromarray(screenData, mode = "RGB")
         self.updateScreen(newScreen)
 
     def updateScreen(self, newScreen):
-        # screen = self.app.img
         if(newScreen != None): self.app.img = newScreen
         self.loadScreen(newScreen)
 

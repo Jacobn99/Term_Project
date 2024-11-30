@@ -4,17 +4,6 @@ from sprite import SpriteDrawer, Sprite
 from tiles import Tile
 
 class MapRenderer:
-    # @staticmethod
-    # def render(map, app, viewMapLoc, screenSize, spriteDrawer, tileSize):
-    #     viewMapRow, viewMapCol = viewMapLoc
-    #     renderedMap = MapRenderer.createRenderedMap(map, app, viewMapLoc, screenSize, tileSize)
-    #     map.setRenderedMap(renderedMap)
-
-    #     renderedRows = len(renderedMap.tileList)
-    #     renderedCols = len(renderedMap.tileList[0]) 
-
-    #     spriteDrawer.drawSprite(renderedMap.tileList[0,0].getSprite(), 200, 200)
-
     @staticmethod
     def render(map, app, viewMapLoc, screenSize, spriteDrawer, tileSize):
         tileList = map.tileList
@@ -22,14 +11,12 @@ class MapRenderer:
         renderedMap = MapRenderer.createRenderedMap(map, app, viewMapLoc, screenSize, tileSize)
         map.setRenderedMap(renderedMap)
         renderedRows = len(renderedMap.tileList)
-        renderedCols = len(renderedMap.tileList[0])        
+        renderedCols = len(renderedMap.tileList[0])     
         tileWidth, tileHeight = tileSize[0], tileSize[1]
         screenWidth = screenSize[0]
         screenHeight = screenSize[1]
 
         startX,startY = MapRenderer.getMapStartLocation(screenSize,tileSize, renderedRows, renderedCols)
-        # print(startX,startY)
-
         relativeRow = 0
         relativeCol = 0
         m = np.zeros((len(tileList), len(tileList[0])))
@@ -43,25 +30,13 @@ class MapRenderer:
         # --------- this code still breaks things ---------
         for relativeRow in range(renderedRows):
             for relativeCol in range(renderedCols):
-                # print(relativeRow,relativeCol)
                 realRow = relativeRow + (viewMapRow - len(tileList)//2)
                 realCol = relativeCol + (viewMapCol - len(tileList[0])//2)
-                
-                # tile = tileList[realRow,realCol]
-                # tile = renderedMap.tileList[relativeRow, relativeCol]
-                # print(realRow,realCol, len(map.tileList),len(map.tileList[0]))
                 tile = tileList[realRow, realCol]
                 tileSprite = tile.getSprite()
                 l.append(tile)
-
-
-                # if(tile in renderedTiles): print("bonga")
-                # if(tileSprite == Tile.getSpriteByName("green_tile")): print("bazinga")
-                # renderedTiles.append(tile)
-
                 screenX,screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, renderer)
                 
-                # print(screenX,screenY)
                 if -tileWidth<=startX + screenX<=screenWidth + tileWidth and -tileHeight<=startY + screenY<=screenHeight + tileHeight:
                     spriteDrawer.drawSprite(tileSprite, screenX, screenY)
                 relativeCol+=1
@@ -69,6 +44,8 @@ class MapRenderer:
         a = np.array(l)
         a = a.reshape(renderedRows, renderedCols)
         m[renderedMap.lowerY: renderedMap.upperY, renderedMap.lowerX: renderedMap.upperX] = 1
+
+        #-------DEBUG CODE-------
         # print(a)
 
         # print(m)
@@ -76,33 +53,29 @@ class MapRenderer:
         # print(f"RenderedRows: {renderedRows}, RenderedCols: {renderedCols}")
         # print(f"'a' row: {len(a)}, 'a' cols: {len(a[0])}")
         # print(f"i: {i}")
-    
-        # print(map.to1DList() in rsenderedMap.to1DList())
+        #------------------------
         return renderedMap
     
-    def generateRepeatMap(self, sprite, size):
+    def generateRepeatMap(self, size, type, sprite = Tile.defaultSprites['empty']):
         rows = size[0]
         cols = size[1]
         mapList = []
 
-        tileSprites = (sprite, Tile.defaultSprites['green_tile'])
-        i = 0
+        # tileSprites = (sprite, Tile.defaultSprites['green_tile'])
         for row in range(rows):
             for col in range(cols):
                 #mapList.append(Tile(self,tileSprites[i%2], row, col))
-                mapList.append(Tile(self,tileSprites[0],row,col))
-                i+=1
+                # mapList.append(Tile(self,Tile.defaultSprites['empty'],row,col, type))
+                mapList.append(Tile(self,row,col, type, sprite = sprite))
+
         m = np.array(mapList)
         map = Map(m.reshape(rows,cols), (0, row, 0, cols))
 
         return map
 
-
     @staticmethod
     def getRelativeMapLocation(currentViewRow, currentViewCol, absoluteRow, absoluteCol, map):
         if (map == None): return absoluteRow, absoluteCol
-        rows, cols = len(map.tileList), len(map.tileList[0])
-
         return (absoluteRow -  currentViewRow, absoluteCol - currentViewCol)
 
     @staticmethod
@@ -130,10 +103,7 @@ class MapRenderer:
 
         y, x = viewMapLoc
         print(f'x:{x},y:{y}')
-        renderedRows, renderedCols = app.viewRowSize, app.viewColSize
-
-        # renderedRows, renderedCols = MapRenderer.getViewSize(map, screenSize, tileSize)
-        
+        renderedRows, renderedCols = app.viewRowSize, app.viewColSize        
         xLowerBound = x - renderedCols//2
         yLowerBound = y - renderedRows//2
         xUpperBound = x + renderedCols//2
