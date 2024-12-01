@@ -51,7 +51,6 @@ def drawResourceIcons(app):
         imageLocs = icon.getImageLocs()
         for loc in imageLocs:
             imgX, imgY = loc
-            # labelX, labelY = icon.getLabelLoc(imgX,imgY)
             drawImage(icon.getResources()[i].getType().getImagePath(), imgX, imgY)
             i+=1
 
@@ -140,15 +139,21 @@ def onKeyPress(app,key):
     elif key == 's':
         if app.currentTile != None:
             row,col = app.currentTile
-            settlement = Settlement(app, app.map.tileList[row,col], app.mapRenderer)
+            settlement = Settlement(app, app.map.tileList[row,col], app.players[0], app.mapRenderer)
             settlement.instantiate()
-            app.players[0].addSettlement(settlement)
+            # app.players[0].addSettlement(settlement)
             print(len(app.players[0].settlements))
     elif key == 'a':
         if app.currentTile != None:    
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             print(tile.getType())
+            app.players[0].settlements[0].harvestResources()
+            print(app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']])
+
+
+    # elif key == 'p':
+
 
     elif key.isdigit() and 1 <=int(key) <= 3:
         if app.currentTile != None:
