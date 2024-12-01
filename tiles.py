@@ -24,6 +24,8 @@ class Tile():
         self.sprite = sprite
         self.resources = []
         self.resourceIcon = None
+        self.civilization = None
+        self.settlement = None
 
         if type != None:
             self.sprite = type.getDefaultSprite()
@@ -36,6 +38,9 @@ class Tile():
 
     def __hash__(self):
         return hash(str(self))
+    def __lt__(self,other):
+        return ((self.row < other.row) or
+                ((self.row == other.row)))
     
     def getResources(self):
         return self.resources

@@ -132,7 +132,7 @@ class ResourceStack:
     def setAmount(self, amount):
         self.amount = amount
 
-    # @staticmethod
+    @staticmethod
     def addStackToCivilization(stack, civilization):
         type = stack.getType()
         _yield = 0
@@ -140,3 +140,13 @@ class ResourceStack:
         _yield += stack.getAmount()
         # print(_yield)
         civilization.yieldsByType[type] = _yield
+    
+    @staticmethod
+    def addStackToSettlement(stack, settlement):
+        ResourceStack.addStackToCivilization(stack, settlement)
+        # type = stack.getType()
+        # _yield = 0
+        # _yield = civilization.yieldsByType[type]
+        # _yield += stack.getAmount()
+        # # print(_yield)
+        # settlement.yieldsByType[type] = _yield

@@ -9,6 +9,7 @@ from player_civilization import Civilization
 from tiles import Tile
 import math
 from resources import ResourceIcon, ResourceStack
+from buildable_units import *
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
@@ -38,12 +39,18 @@ def onAppStart(app):
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
     app.currentTile = None
     app.resourceIcons = set()
+    
+    app.drawableUnits = []
 
     app.players = [Civilization()]
 
 def redrawAll(app):
+    drawUnits()
     drawImage("screen.jpg", 0, 0)
     drawResourceIcons(app)
+
+def drawUnits():
+    pass
 
 def drawResourceIcons(app):
     for icon in app.resourceIcons:
@@ -128,6 +135,12 @@ def getRelativeTile(mouseX, mouseY, screenSize, map):
       
         return x,y
     
+def takeNextTurn(app):
+    app.players[0].settlements[0].harvestResources()
+    print(f"production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
+            food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
+    app.players[0].useProduction()
+
 def onKeyPress(app,key):
     if key == 'r':
         tileSprite = Sprite(app.tileImage)
@@ -141,19 +154,31 @@ def onKeyPress(app,key):
             row,col = app.currentTile
             settlement = Settlement(app, app.map.tileList[row,col], app.players[0], app.mapRenderer)
             settlement.instantiate()
-            # app.players[0].addSettlement(settlement)
             print(len(app.players[0].settlements))
     elif key == 'a':
-        if app.currentTile != None:    
+        if app.currentTile != None:
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             print(tile.getType())
-            app.players[0].settlements[0].harvestResources()
-            print(app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']])
+            # app.players[0].settlements[0].harvestResources()
+            # print(f"production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
+            #       food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
+    elif key == 'd':
+        app.players[0].settlements[0].builder.setUnit(Warrior(app.players[0], app))
 
-
-    # elif key == 'p':
-
+    elif key == 'n':
+        takeNextTurn(app)
+    elif key == 'p':
+        if app.currentTile != None:
+            row,col = app.currentTile
+            tile = app.map.tileList[row,col]
+            # if app.map.tileList[row,col] in app.players[0].getCivilizationTiles():
+            if tile.civilization == app.players[0]:
+               settlement = tile.settlement
+               if tile not in settlement.harvestedTiles: settlement.harvestedTiles.add(tile)
+               else: settlement.harvestedTiles.remove(tile)
+            
+            # tile = app.map.tileList[row,col]
 
     elif key.isdigit() and 1 <=int(key) <= 3:
         if app.currentTile != None:
@@ -161,9 +186,6 @@ def onKeyPress(app,key):
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             # tile.setType(types[int(key) - 1])
-
-
-
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewRow += 1

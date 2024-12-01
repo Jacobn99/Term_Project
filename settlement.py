@@ -3,6 +3,7 @@ from sprite import Sprite
 from map_render import Map, MapRenderer
 from tile_types import *
 from resources import ResourceStack
+from buildable_units import Builder
 
 class Settlement():
     def __init__(self, app, tile, civilization, mapRenderer):
@@ -15,8 +16,10 @@ class Settlement():
         self.size = 2
         self.settlementTiles = Settlement.createTileList(self.row, self.col, self.size, self.app.map)
         self.population = 2
-        self.harvestedTiles = [self.settlementTiles[0,0]]
+        self.harvestedTiles = set()
         self.civilization.addSettlement(self)
+        self.builder = Builder(self)
+        self.yieldsByType = dict()
 
     def __repr__(self):
         return f'settlement(row={self.row}, col={self.col})'
@@ -27,18 +30,28 @@ class Settlement():
     def __hash__(self):
         return hash(str(self))
     
+    def getYields(self, resourceType):
+        if resourceType not in self.yieldsByType: return 0
+        else: return self.yieldsByType[resourceType]
+
+    # def updateResources()
+
     def harvestResources(self):
         for tile in self.harvestedTiles:
             resources = tile.getResources()
             if resources == []: continue
             else: 
                 for stack in resources:
-                    ResourceStack.addStackToCivilization(stack, self.civilization)
+                    # ResourceStack.addStackToCivilization(stack, self.civilization)
+                    self.civilization.addYield(stack)
 
     def instantiate(self):
         tile = self.app.map.tileList[self.row, self.col]
         Settlement.colorSettlementTiles(self.app, self)
         tile.setType(SettlementCenter(), self.app)
+        for tile in self.getSettlementTiles().flatten():
+            tile.civilization = self.civilization
+            tile.settlement = self
         # tile.changeSprite(Tile.defaultSprites['brown_tile'])
         tile.redrawTile(tile, (self.app.currentViewRow,self.app.currentViewCol), self.app.spriteDrawer, 
                         (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
