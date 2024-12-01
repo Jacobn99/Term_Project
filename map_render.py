@@ -1,6 +1,4 @@
-from PIL import Image
 import numpy as np
-from sprite import SpriteDrawer, Sprite
 from tiles import Tile
 
 class MapRenderer:
@@ -61,11 +59,8 @@ class MapRenderer:
         cols = size[1]
         mapList = []
 
-        # tileSprites = (sprite, Tile.defaultSprites['green_tile'])
         for row in range(rows):
             for col in range(cols):
-                #mapList.append(Tile(self,tileSprites[i%2], row, col))
-                # mapList.append(Tile(self,Tile.defaultSprites['empty'],row,col, type))
                 mapList.append(Tile(self,row,col, type, sprite = sprite))
 
         m = np.array(mapList)

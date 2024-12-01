@@ -2,15 +2,7 @@ from abc import ABC, abstractmethod
 from PIL import Image
 from sprite import Sprite
 
-
 class TileType(ABC):
-    # emptyTile = Image.open("sprites/TileShape.png")
-    # greenTile = Image.open("sprites/green_tile.png")
-    # brownTile = Image.open("sprites/brown_tile.png")
-    # treeTile = Image.open("sprites/tree_tile.png")
-    # defaultSprites = {'empty' : Sprite(emptyTile), 'green_tile': Sprite(greenTile), 'brown_tile' : Sprite(brownTile), 
-    #                   'tree_tile' : Sprite(treeTile)}
-
     @abstractmethod
     def getDefaultSprite(self):
         pass
@@ -28,7 +20,7 @@ class ForestTile(TileType):
         return Sprite(treeTile)
     
     def getResourceTable(self):
-        return None
+        return {'production' : [1,2,2,2,3], 'food' : [0,1,1,1,2,2]}
     
 class SettlementCenter(TileType):
     def __init__(self):

@@ -8,7 +8,7 @@ from settlement import Settlement
 from player_civilization import Civilization
 from tiles import Tile
 import math
-from materials import MaterialIcon
+from resources import ResourceIcon, ResourceStack
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
@@ -37,7 +37,7 @@ def onAppStart(app):
     app.tileImage = Image.open("sprites/TileShape.png")
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
     app.currentTile = None
-    app.materialIcons = set()
+    app.resourceIcons = set()
 
     app.players = [Civilization()]
 
@@ -46,14 +46,20 @@ def redrawAll(app):
     drawResourceIcons(app)
 
 def drawResourceIcons(app):
-    for icon in app.materialIcons:
-        imgX, imgY = icon.getImageLoc()
-        labelX, labelY = icon.getLabelLoc(imgX,imgY)
-        # print(imgX, imgY)
-        drawImage(icon.imagePath, imgX, imgY)
-        drawLabel(icon.getAmount(), labelX, labelY)
-                
+    for icon in app.resourceIcons:
+        i = 0
+        imageLocs = icon.getImageLocs()
+        for loc in imageLocs:
+            imgX, imgY = loc
+            # labelX, labelY = icon.getLabelLoc(imgX,imgY)
+            drawImage(icon.getResources()[i].getType().getImagePath(), imgX, imgY)
+            i+=1
 
+        i = 0
+        for loc in icon.getLabelLocs(imageLocs):
+            drawLabel(icon.getResources()[i].getAmount(), loc[0], loc[1])
+            i+=1
+                
 def onMouseMove(app, mouseX,mouseY):
     mapLoc = getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
 
@@ -129,15 +135,12 @@ def onKeyPress(app,key):
         app.map = MapRenderer.generateRepeatMap(app.mapRenderer, (app.mapRows,app.mapCols), None)
 
         app.map.tileList[0,0].changeSprite(Tile.defaultSprites['green_tile'])
-        app.materialIcons.add(MaterialIcon(app.map.tileList[0,0], app, "sprites/small_gear.png"))
-
         app.currentViewRow, app.currentViewCol = getTile(app, app.width//2, app.height//2,(app.width,app.height), app.map)
         app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewRow,app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 's':
         if app.currentTile != None:
             row,col = app.currentTile
             settlement = Settlement(app, app.map.tileList[row,col], app.mapRenderer)
-            # Settlement.colorSettlementTiles(app, settlement)
             settlement.instantiate()
             app.players[0].addSettlement(settlement)
             print(len(app.players[0].settlements))
@@ -152,7 +155,7 @@ def onKeyPress(app,key):
             types = List(Tile.tileTypes)    
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
-            tile.setType(types[int(key) - 1])
+            # tile.setType(types[int(key) - 1])
 
 
 

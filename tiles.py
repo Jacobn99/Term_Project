@@ -1,7 +1,9 @@
 from PIL import Image
 import numpy as np
 from sprite import Sprite
+from resources import ResourceIcon, ResourceStack
 from tile_types import *
+import random
 
 class Tile():
     # Making references to default tileSprites so that they are cached unless they are modified
@@ -14,14 +16,14 @@ class Tile():
     highlightColor = [255,0,0]
 
     def __init__(self, mapRenderer, row, col, type, sprite = tileShape):
-
         self.mapRenderer = mapRenderer
         self.col = col # col in map
         self.row = row # row in map
         self.isHighlighted = False
         self.type = type
         self.sprite = sprite
-        self.resources = set()
+        self.resources = []
+        self.resourceIcon = None
 
         if type != None:
             self.sprite = type.getDefaultSprite()
@@ -35,6 +37,23 @@ class Tile():
     def __hash__(self):
         return hash(str(self))
     
+    def getResources(self):
+        return self.resources
+    
+    def addResource(self, resourceStack, app):
+        for resource in self.resources:
+            if resource.getType() == resourceStack.getType():
+                resource.setAmount(resource.getAmount() + resourceStack.getAmount())
+                return
+        
+        print(f'resourceStack:{resourceStack}')
+        self.resources.append(resourceStack)
+        self.LoadIcon(app)
+
+    def LoadIcon(self,app):
+        if self.resourceIcon == None and self.resources != []:
+            self.resourceIcon = ResourceIcon(self, app)
+
     # Changes sprite without making an alias
     def changeSprite(self, newSprite):
         self.sprite = newSprite
@@ -45,13 +64,27 @@ class Tile():
     def getSize(self):
         return self.sprite.getSize()
     
-    def setType(self,type):
+    def setType(self,type,app):
         self.type = type
         self.sprite = type.getDefaultSprite()
+        Tile.implementTypeResources(self,app)
 
     def getType(self):
         return self.type
-    
+
+
+    @staticmethod
+    def implementTypeResources(tile,app):
+        resourceTable = tile.getType().getResourceTable()
+        if resourceTable == None: 
+            tile.resourceIcon.deleteIcon()
+            return
+        for key in tile.getType().getResourceTable():
+            index = random.randrange(len(resourceTable))
+            amount = resourceTable[key][index]
+            if amount > 0:
+                tile.addResource(ResourceStack(ResourceStack.ResourceTypes[key], amount),app)
+
 
     @staticmethod
     def changeTileBorder(tile, borderColor):

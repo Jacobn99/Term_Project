@@ -12,6 +12,7 @@ class Settlement():
         self.mapRenderer = mapRenderer
         self.size = 2
         self.settlementTiles = Settlement.createTileList(self.row, self.col, self.size, self.app.map)
+        self.population = 2
 
     def __repr__(self):
         return f'settlement(row={self.row}, col={self.col})'
@@ -25,7 +26,7 @@ class Settlement():
     def instantiate(self):
         tile = self.app.map.tileList[self.row, self.col]
         Settlement.colorSettlementTiles(self.app, self)
-        tile.setType(SettlementCenter())
+        tile.setType(SettlementCenter(), self.app)
         # tile.changeSprite(Tile.defaultSprites['brown_tile'])
         tile.redrawTile(tile, (self.app.currentViewRow,self.app.currentViewCol), self.app.spriteDrawer, 
                         (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
@@ -33,11 +34,14 @@ class Settlement():
     def getSettlementTiles(self):
         return self.settlementTiles
     
+    def addPopulation(self, number):
+        self.population += number
+    
     @staticmethod
     def colorSettlementTiles(app, settlement):
         for rowList in settlement.getSettlementTiles():
                 for tile in rowList:
-                    tile.setType(ForestTile())
+                    tile.setType(ForestTile(), app)
                     # tile.changeSprite(Tile.defaultSprites['green_tile'])
                     tile.redrawTile(tile, (app.currentViewRow, app.currentViewCol), app.spriteDrawer, 
                             (app.width, app.height), app.map, app.mapRenderer)
