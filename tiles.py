@@ -26,6 +26,8 @@ class Tile():
         self.resourceIcon = None
         self.civilization = None
         self.settlement = None
+        self.movableUnit = None
+
 
         if type != None:
             self.sprite = type.getDefaultSprite()
@@ -42,8 +44,16 @@ class Tile():
         return ((self.row < other.row) or
                 ((self.row == other.row)))
     
+    # def getRelativeLoc(self, map):
+    #     renderedMap = map.getRenderedMap()
+    #     # print(renderedMap.lowerY, self.row, renderedMap.upperY)
+    #     # print(renderedMap.lowerX, self.col, renderedMap.upperX)
+    #     if (renderedMap.lowerY<=self.row<renderedMap.upperY) and (renderedMap.lowerX <=self.col<renderedMap.upperX):
+    #         return self.row - renderedMap.lowerY, self.col - renderedMap.lowerX
+    #     else: return None
+    
     def getResources(self):
-        return self.resources
+        return self.resources            
     
     def addResource(self, resourceStack, app):
         for resource in self.resources:
@@ -78,6 +88,14 @@ class Tile():
         return self.type
 
 
+    @staticmethod
+    def getRealLoc(relativeRow, relativeCol, map):
+        renderedMap = map.getRenderedMap()
+        if renderedMap == None: return None
+        else:
+            tile = renderedMap.tileList[relativeRow, relativeCol]
+            return tile.row, tile.col
+        
     @staticmethod
     def implementTypeResources(tile,app):
         resourceTable = tile.getType().getResourceTable()
@@ -115,11 +133,10 @@ class Tile():
     @staticmethod
     def redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer):
         currentViewMapRow, currentViewMapCol = viewMapLoc
-        relativeRow, relativeCol = Tile.realToRelativeLoc(tile.row,tile.col, map, currentViewMapRow, currentViewMapCol)
-
-        # DEBUG LINE
-        # print(f'absRow: {tile.row}, absCol: {tile.col}, relativeRow: {relativeRow}, relativeCol: {relativeCol}')
-
+        location = Tile.getRelativeLoc(tile.row, tile.col, map)
+        if location == None: return
+        
+        relativeRow, relativeCol = location
         screenX, screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, mapRenderer)
         spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
 
@@ -145,8 +162,16 @@ class Tile():
         Tile.redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer)
 
     @staticmethod
-    def realToRelativeLoc(row,col, map, currentViewMapRow, currentViewMapCol):
-        relativeRow = row - (currentViewMapRow - len(map.tileList)//2)
-        relativeCol = col - (currentViewMapCol - len(map.tileList[0])//2)
+    def getRelativeLoc(row,col, map):
+            renderedMap = map.getRenderedMap()
+            # print(renderedMap.lowerY, self.row, renderedMap.upperY)
+            # print(renderedMap.lowerX, self.col, renderedMap.upperX)
+            if (renderedMap.lowerY<=row<renderedMap.upperY) and (renderedMap.lowerX <=col<renderedMap.upperX):
+                return row - renderedMap.lowerY, col - renderedMap.lowerX
+            else: return None
+    # @staticmethod
+    # def realToRelativeLoc(row,col, map, currentViewMapRow, currentViewMapCol):
+    #     relativeRow = row - (currentViewMapRow - len(map.tileList)//2)
+    #     relativeCol = col - (currentViewMapCol - len(map.tileList[0])//2)
 
-        return relativeRow, relativeCol
+    #     return relativeRow, relativeCol

@@ -14,6 +14,9 @@ class Sprite():
 
     def getSize(self):
         return (self.width, self.height)
+    
+    def getFileName(self):
+        return self.img.filename
 
     def getData(self):
         return self.data[:,:,:3].copy()

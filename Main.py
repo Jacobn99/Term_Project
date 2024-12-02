@@ -39,26 +39,38 @@ def onAppStart(app):
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
     app.currentTile = None
     app.resourceIcons = set()
-    
+    app.tileSize = (100,50)
+    app.isMoving = False
     app.drawableUnits = []
+    app.prevClickTile = None
 
     app.players = [Civilization()]
 
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
-    drawUnits()
+    drawUnits(app)
 
     drawResourceIcons(app)
 
 
-def drawUnits():
+def drawUnits(app):
     for unit in app.drawableUnits:
-        drawImage(unit.getLocation)
+        width, height = app.tileSize
+        realLocation = unit.getLocation()
+        relativeMapLocation = Tile.getRelativeLoc(realLocation[0], realLocation[1], app.map)
+        renderedMap = app.map.getRenderedMap()
+        if relativeMapLocation != None and renderedMap != None:
+            sprite = unit.getSprite() 
+            spriteSize = sprite.getSize()
+            row, col = relativeMapLocation
+            x,y = Tile.mapToScreenCords((row,col), app.tileSize, (app.width,app.height), renderedMap, app.mapRenderer)
+            drawImage(sprite.getFileName(), x + width//2 - spriteSize[0]//2,y + height//2 - (2*spriteSize[1])//3)
 
 def drawResourceIcons(app):
     for icon in app.resourceIcons:
         i = 0
         imageLocs = icon.getImageLocs()
+        if imageLocs == None: continue
         for loc in imageLocs:
             imgX, imgY = loc
             drawImage(icon.getResources()[i].getType().getImagePath(), imgX, imgY)
@@ -86,6 +98,23 @@ def onMouseMove(app, mouseX,mouseY):
         Tile.changeHighlight(app.map.tileList[row, col], (app.currentViewRow, app.currentViewCol), 
                              app.map, app.mapRenderer, (app.width,app.height), app.spriteDrawer)
         
+def onMousePress(app, mouseX,mouseY):
+
+    if app.currentTile != None:
+        print('clicked tile')
+        tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
+        if tile.movableUnit != None:
+            print('not none')
+            app.isMoving = True
+            app.prevClickTile = tile
+        elif app.isMoving and app.prevClickTile!=None:
+            unit = app.prevClickTile.movableUnit
+            unit.move(app.currentTile)
+            app.isMoving = False
+            app.prevClickTile = None
+            
+        # unit.move()
+    
 
 def loadScreen(app, img):
     if img == None:
@@ -105,16 +134,12 @@ def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
     renderedMap = map.getRenderedMap()
     if renderedMap == None: renderedMap = map
 
-    row,col = getRelativeTile(mouseX, mouseY, screenSize, map)
-    relativeRow = row
-    relativeCol = col
-    if(app.currentViewCol != None and app.currentViewRow != None):
-        row += app.currentViewRow - (len(map.tileList)//2)
-        col += app.currentViewCol - (len(map.tileList[0])//2)
-       
-    if onlyRendered and ((0 > relativeRow or relativeRow>=len(renderedMap.tileList)) or 
-                         (0 > relativeCol or relativeCol>=len(renderedMap.tileList[0]))): return None
-    if 0 <= row < len(map.tileList) and 0 <= col <len(map.tileList[0]): return row, col
+    relativeRow,relativeCol = getRelativeTile(mouseX, mouseY, screenSize, map)
+
+    if 0<=relativeRow<len(renderedMap.tileList) and 0 <= relativeCol < len(renderedMap.tileList[0]):
+        tile = renderedMap.tileList[relativeRow, relativeCol]
+        return tile.row, tile.col
+
     else: return None
 
 def getRelativeTile(mouseX, mouseY, screenSize, map):
@@ -149,7 +174,8 @@ def takeNextTurn(app):
 def onKeyPress(app,key):
     if key == 'r':
         tileSprite = Sprite(app.tileImage)
-        app.map = MapRenderer.generateRepeatMap(app.mapRenderer, (app.mapRows,app.mapCols), None)
+        # app.map = MapRenderer.generateRepeatMap(app.mapRenderer, (app.mapRows,app.mapCols), None)
+        app.map = MapRenderer.generateRandomMap(app.mapRenderer, app, (app.mapRows,app.mapCols))
 
         app.map.tileList[0,0].changeSprite(Tile.defaultSprites['green_tile'])
         app.currentViewRow, app.currentViewCol = getTile(app, app.width//2, app.height//2,(app.width,app.height), app.map)
@@ -165,9 +191,8 @@ def onKeyPress(app,key):
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             print(tile.getType())
-            # app.players[0].settlements[0].harvestResources()
-            # print(f"production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
-            #       food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
+            print(tile.getRelativeLoc(app.map))
+            
     elif key == 'd':
         app.players[0].settlements[0].builder.setUnit(Warrior(app.players[0], app))
 

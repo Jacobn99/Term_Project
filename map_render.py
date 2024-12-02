@@ -1,5 +1,7 @@
 import numpy as np
 from tiles import Tile
+from tile_types import *
+import random
 
 class MapRenderer:
     @staticmethod
@@ -28,9 +30,10 @@ class MapRenderer:
         # --------- this code still breaks things ---------
         for relativeRow in range(renderedRows):
             for relativeCol in range(renderedCols):
-                realRow = relativeRow + (viewMapRow - len(tileList)//2)
-                realCol = relativeCol + (viewMapCol - len(tileList[0])//2)
-                tile = tileList[realRow, realCol]
+                # realRow = relativeRow + (viewMapRow - len(tileList)//2)
+                # realCol = relativeCol + (viewMapCol - len(tileList[0])//2)
+                # tile = tileList[realRow, realCol]
+                tile = renderedMap.tileList[relativeRow, relativeCol]
                 tileSprite = tile.getSprite()
                 l.append(tile)
                 screenX,screenY = Tile.mapToScreenCords((relativeRow, relativeCol), tile.getSize(),screenSize, map.renderedMap, renderer)
@@ -54,6 +57,25 @@ class MapRenderer:
         #------------------------
         return renderedMap
     
+    def generateRandomMap(self, app, size):
+        typeList = [GrassTile(), ForestTile(), RockTile()]
+        rows = size[0]
+        cols = size[1]
+        mapList = []
+
+        for row in range(rows):
+            for col in range(cols):
+                rand = random.randrange(len(typeList))
+                type = typeList[rand]
+                tile = Tile(self,row,col, None)
+                mapList.append(tile)
+                tile.setType(type, app)
+
+        m = np.array(mapList)
+        map = Map(m.reshape(rows,cols), (0, row, 0, cols))
+
+        return map
+
     def generateRepeatMap(self, size, type, sprite = Tile.defaultSprites['empty']):
         rows = size[0]
         cols = size[1]

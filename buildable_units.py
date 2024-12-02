@@ -17,7 +17,7 @@ class Builder():
             self.costRemaining -= self.productionPerTurn
             if self.costRemaining <= 0: 
                 self.costRemaining = 0
-                #self.unit.instantiate()
+                self.unit.instantiate((self.settlement.row - 1, self.settlement.col))
             print(self.costRemaining)
 
 
@@ -35,15 +35,6 @@ class Builder():
     def getConstructing(self):
         return self.unit
 
-    # def getQueue(self):
-    #     pass
-
-    # def lowerCost(self, productionAmount):
-    #     pass
-
-    # def setCost(self, cost):
-    #     pass
-
 class BuildableUnit(ABC):
     @abstractmethod
     def getProductionCost(self):
@@ -51,13 +42,14 @@ class BuildableUnit(ABC):
 
 
 class MovableUnit(BuildableUnit):
+    
+    # def move(self, newLoc):
+    #     oldRow,oldCol = self.location
+    #     oldTile = self.app.map
     @abstractmethod
-    def getLocation(self):
+    def getProductionCost(self):
         pass
     
-    @abstractmethod
-    def move(self, newTile):
-        pass
 
 class Warrior(MovableUnit):
     warriorSprite = Sprite(Image.open("sprites/warrior.png"))
@@ -74,7 +66,10 @@ class Warrior(MovableUnit):
 
     def instantiate(self, spawnTile):
         self.location = spawnTile
-        self.drawUnit(self)
+        row,col = self.location
+        tile = self.app.map.tileList[row, col]
+        tile.movableUnit = self
+        self.drawUnit()
 
     def drawUnit(self):
         self.app.drawableUnits.append(self)
@@ -82,27 +77,26 @@ class Warrior(MovableUnit):
     def getLocation(self):
         return self.location
     
-    def move(self, newTile):
-        pass
+    def getSprite(self):
+        return self.sprite
     
-    # def getSpriteLoc(self):
-    #     result = []
-    #     resources = self.getResources()
-    #     numOfResources = len(resources)
-    #     tileWidth, tileHeight = self.tile.getSize()
-    #     relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
-    #                                                           self.app.currentViewRow, self.app.currentViewCol)
+    def move(self, newLoc):
+        oldRow,oldCol = self.location
+        tile = self.app.map.tileList[oldRow,oldCol]
+        tile.movableUnit = None
+        self.location = newLoc
+        newTile = self.app.map.tileList[newLoc[0],newLoc[1]]
+        newTile.movableUnit = self
+    
+    def getSpriteLoc(self):
+        # numOfResources = len(resources)
+        # tileWidth, tileHeight = self.tile.getSize()
+        relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
+                                                              self.app.currentViewRow, self.app.currentViewCol)
         
-    #     centerX,y = self.tile.mapToScreenCords((relativeRow, relativeCol), self.tile.getSize(), 
-    #                                                 (self.app.width, self.app.height), self.app.map.getRenderedMap(), 
-    #                                                 self.app.mapRenderer)
-    #     centerX = centerX + tileWidth//2 - self.imgSize[0]//2
-    #     y = y + tileHeight//2 - 1*self.imgSize[1]//4
-
-    #     for i in range(numOfResources):
-    #         correction = i * ResourceIcon.ImgSpacing - (ResourceIcon.ImgSpacing * (numOfResources))//4
-    #         result.append((centerX + correction, y))
-
-    #     return result
+        x,y = self.tile.mapToScreenCords((relativeRow, relativeCol), self.tile.getSize(), 
+                                                    (self.app.width, self.app.height), self.app.map.getRenderedMap(), 
+                                                    self.app.mapRenderer)
+        return x,y
 
         

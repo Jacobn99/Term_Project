@@ -86,6 +86,7 @@ class Settlement():
         for rowList in settlement.getSettlementTiles():
                 for tile in rowList:
                     tile.setType(ForestTile(), app)
+                    # tile.setType(GrassTile(),app)
                     # tile.changeSprite(Tile.defaultSprites['green_tile'])
                     tile.redrawTile(tile, (app.currentViewRow, app.currentViewCol), app.spriteDrawer, 
                             (app.width, app.height), app.map, app.mapRenderer)

@@ -21,8 +21,13 @@ class ResourceIcon:
         resources = self.getResources()
         numOfResources = len(resources)
         tileWidth, tileHeight = self.tile.getSize()
-        relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
-                                                              self.app.currentViewRow, self.app.currentViewCol)
+        # relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
+        #                                                       self.app.currentViewRow, self.app.currentViewCol)
+
+        location = self.tile.getRelativeLoc(self.tile.row,self.tile.col, self.app.map)
+        if location != None:
+            relativeRow, relativeCol = location
+        else: return None
         
         centerX,y = self.tile.mapToScreenCords((relativeRow, relativeCol), self.tile.getSize(), 
                                                     (self.app.width, self.app.height), self.app.map.getRenderedMap(), 
