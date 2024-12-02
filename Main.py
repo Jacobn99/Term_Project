@@ -45,12 +45,15 @@ def onAppStart(app):
     app.players = [Civilization()]
 
 def redrawAll(app):
-    drawUnits()
     drawImage("screen.jpg", 0, 0)
+    drawUnits()
+
     drawResourceIcons(app)
 
+
 def drawUnits():
-    pass
+    for unit in app.drawableUnits:
+        drawImage(unit.getLocation)
 
 def drawResourceIcons(app):
     for icon in app.resourceIcons:
@@ -136,8 +139,10 @@ def getRelativeTile(mouseX, mouseY, screenSize, map):
         return x,y
     
 def takeNextTurn(app):
-    app.players[0].settlements[0].harvestResources()
-    print(f"production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
+    for civilization in app.players:
+        civilization.updateAllYields()        
+    # app.players[0].settlements[0].harvestResources()
+    print(f"Civilization - production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
             food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
     app.players[0].useProduction()
 

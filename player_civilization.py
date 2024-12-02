@@ -23,15 +23,29 @@ class Civilization:
     def useProduction(self):
         for settlement in self.settlements:
             builder = settlement.builder
+            settlement.updateYields()
+            # print(settlement.yieldsByType)
             builder.updateProgress()
-            print(builder.getCostRemaining())
+            # print(builder.getCostRemaining())
             
+    def resetYieldsByType(self):
+        for key in self.yieldsByType:
+            self.yieldsByType[key] = 0
 
     def getCivilizationTiles(self):
         result = np.array([])
         for settlement in self.settlements:
             result = np.union1d(result, settlement.settlementTiles.flatten())
         return result
+    
+    def updateAllYields(self):
+        self.resetYieldsByType()
+        for settlement in self.settlements:
+            settlement.harvestResources()
+            for type in settlement.yieldsByType:
+                # print(key, settlement.yieldsByType[key])
+                if type in self.yieldsByType:
+                    self.yieldsByType[type] += settlement.yieldsByType[type]
 
     def addYield(self, stack):
         ResourceStack.addStackToCivilization(stack, self)

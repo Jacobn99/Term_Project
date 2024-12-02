@@ -19,7 +19,8 @@ class Settlement():
         self.harvestedTiles = set()
         self.civilization.addSettlement(self)
         self.builder = Builder(self)
-        self.yieldsByType = dict()
+        self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
+                             ResourceStack.ResourceTypes['food'] : 0}
 
     def __repr__(self):
         return f'settlement(row={self.row}, col={self.col})'
@@ -33,6 +34,22 @@ class Settlement():
     def getYields(self, resourceType):
         if resourceType not in self.yieldsByType: return 0
         else: return self.yieldsByType[resourceType]
+    
+    def addYield(self, stack):
+        ResourceStack.addStackToSettlement(stack,self)
+
+    def updateYields(self):
+        self.resetYieldsByType()
+        self.harvestResources()
+
+        # for tile in self.harvestedTiles:
+        #     for stack in tile.getResources():
+        #         ResourceStack.addStackToSettlement(stack, self)
+
+    def resetYieldsByType(self):
+        for key in self.yieldsByType:
+            self.yieldsByType[key] = 0
+
 
     # def updateResources()
 
@@ -43,7 +60,9 @@ class Settlement():
             else: 
                 for stack in resources:
                     # ResourceStack.addStackToCivilization(stack, self.civilization)
-                    self.civilization.addYield(stack)
+                    # self.civilization.addYield(stack)
+                    self.addYield(stack)
+        # print(self.yieldsByType)
 
     def instantiate(self):
         tile = self.app.map.tileList[self.row, self.col]

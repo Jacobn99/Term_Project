@@ -132,10 +132,16 @@ class ResourceStack:
     def setAmount(self, amount):
         self.amount = amount
 
+    def getResource(resourceStr):
+        try:
+            return ResourceStack.ResourceTypes[resourceStr]
+        except:
+            if resourceStr not in ResourceStack.ResourceTypes: print("NOT A VALID RESOURCE")
+            assert(False == True)
+
     @staticmethod
     def addStackToCivilization(stack, civilization):
         type = stack.getType()
-        _yield = 0
         _yield = civilization.yieldsByType[type]
         _yield += stack.getAmount()
         # print(_yield)
