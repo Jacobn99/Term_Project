@@ -1,6 +1,6 @@
 from typing import List
 from cmu_graphics import *
-from PIL import Image
+import PIL as pil
 import numpy as np
 from sprite import SpriteDrawer, Sprite
 from map_render import MapRenderer, Map
@@ -11,6 +11,7 @@ import math
 from resources import ResourceIcon, ResourceStack
 from buildable_units import *
 from game_management import *
+from ui import *
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
@@ -38,7 +39,7 @@ def onAppStart(app):
     app.viewColSize = 8
 
     app.ignorableColor = (255,255,255)
-    app.tileImage = Image.open("sprites/TileShape.png")
+    app.tileImage = pil.Image.open("sprites/TileShape.png")
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
     app.currentTile = None
     app.resourceIcons = set()
@@ -47,6 +48,7 @@ def onAppStart(app):
     app.drawableUnits = []
     app.prevClickTile = None
     app.tileHeight,app.tileWidth = app.tileImage.size
+    app.renderedUI = []
 
     app.players = [Civilization(), Civilization()]
     app.currentPlayerID = 0
@@ -57,7 +59,14 @@ def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
     drawUnits(app)
     drawResourceIcons(app)
+    drawUI(app)
+    
 
+
+def drawUI(app):
+    for ui in app.renderedUI:
+        print('got here')
+        ui.drawAll(app)
 
 def drawUnits(app):
     for unit in app.drawableUnits:
@@ -106,11 +115,11 @@ def onMouseMove(app, mouseX,mouseY):
         
 def onMousePress(app, mouseX,mouseY):
 
+    currentPlayer = app.players[app.currentPlayerID]
     if app.currentTile != None:
         print('clicked tile')
         tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
         if tile.movableUnit != None:
-            print('not none')
             app.isMoving = True
             app.prevClickTile = tile
         elif app.isMoving and app.prevClickTile!=None:
@@ -118,6 +127,12 @@ def onMousePress(app, mouseX,mouseY):
             unit.move(app.currentTile)
             app.isMoving = False
             app.prevClickTile = None
+        
+        if tile.settlement != None and tile.settlement in currentPlayer.settlements:
+            ui = SettlementUI(app, app.gameManager)
+            ui.instantiate(app)
+            
+
             
         # unit.move()
  
@@ -146,7 +161,6 @@ def onKeyPress(app,key):
         if app.currentTile != None:
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
-            # if app.map.tileList[row,col] in app.players[0].getCivilizationTiles():
             if tile.civilization == currentPlayer:
                settlement = tile.settlement
                if tile not in settlement.harvestedTiles: settlement.harvestedTiles.add(tile)

@@ -58,10 +58,10 @@ class ResourceType(ABC):
     @abstractmethod
     def getName(self):
         pass
-
+    @abstractmethod
     def getImagePath(self):
         pass
-
+    @abstractmethod
     def getImage(self):
         pass
 
