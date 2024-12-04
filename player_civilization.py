@@ -5,13 +5,11 @@ class Civilization:
     id = 0
     def __init__(self):
         self.settlements = []
-        # self.sciencePerTurn = 0
-        # self.goldPerTurn = 0
-        # self.productionPerTurn = 0
-        # self.foodPerTurn = 0
         self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
                              ResourceStack.ResourceTypes['food'] : 0}
         self.id = Civilization.id
+        self.startRow = None
+        self.startCol = None
         Civilization.id+=1
 
     def __repr__(self):
@@ -19,6 +17,9 @@ class Civilization:
     
     def __eq__(self,other):
         return isinstance(other, Civilization) and self.id == other.id
+    
+    def setSpawnLocation(self, spawnLoc):
+        self.startRow, self.startCol = spawnLoc
     
     def useProduction(self):
         for settlement in self.settlements:

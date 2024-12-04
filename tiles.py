@@ -44,14 +44,6 @@ class Tile():
         return ((self.row < other.row) or
                 ((self.row == other.row)))
     
-    # def getRelativeLoc(self, map):
-    #     renderedMap = map.getRenderedMap()
-    #     # print(renderedMap.lowerY, self.row, renderedMap.upperY)
-    #     # print(renderedMap.lowerX, self.col, renderedMap.upperX)
-    #     if (renderedMap.lowerY<=self.row<renderedMap.upperY) and (renderedMap.lowerX <=self.col<renderedMap.upperX):
-    #         return self.row - renderedMap.lowerY, self.col - renderedMap.lowerX
-    #     else: return None
-    
     def getResources(self):
         return self.resources            
     
@@ -61,7 +53,7 @@ class Tile():
                 resource.setAmount(resource.getAmount() + resourceStack.getAmount())
                 return
         
-        print(f'resourceStack:{resourceStack}')
+        # print(f'resourceStack:{resourceStack}')
         self.resources.append(resourceStack)
         self.LoadIcon(app)
 

@@ -10,18 +10,21 @@ from tiles import Tile
 import math
 from resources import ResourceIcon, ResourceStack
 from buildable_units import *
+from game_management import *
 
 
 # Go in numpy and make it so only the part of the map you can see if being rendered at one time 
 # (edit the map being used with numpy to include only what you can see)
 
 def onAppStart(app):
+    app.gameManager = GameManager()
+
     app.width = 600
     app.height = 600
     app.counter = 0
     app.imageColor = (255,255,255)
     app.imgName = "screen"
-    app.img = loadScreen(app, None)
+    app.img = app.gameManager.loadScreen(app, None)
     app.colors = [(100,0,0), (0,100,0), (0,0,100)]
     app.map = None
     app.mapRows = 30
@@ -43,13 +46,16 @@ def onAppStart(app):
     app.isMoving = False
     app.drawableUnits = []
     app.prevClickTile = None
+    app.tileHeight,app.tileWidth = app.tileImage.size
 
-    app.players = [Civilization()]
+    app.players = [Civilization(), Civilization()]
+    app.currentPlayerID = 0
+
+    app.gameManager.startGame(app)
 
 def redrawAll(app):
     drawImage("screen.jpg", 0, 0)
     drawUnits(app)
-
     drawResourceIcons(app)
 
 
@@ -82,7 +88,7 @@ def drawResourceIcons(app):
             i+=1
                 
 def onMouseMove(app, mouseX,mouseY):
-    mapLoc = getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
+    mapLoc = app.gameManager.getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
 
     if mapLoc != app.prevHoveredTileLoc and app.prevHoveredTileLoc != None: 
         prevRow, prevCol = app.prevHoveredTileLoc
@@ -114,78 +120,16 @@ def onMousePress(app, mouseX,mouseY):
             app.prevClickTile = None
             
         # unit.move()
-    
-
-def loadScreen(app, img):
-    if img == None:
-        img = Image.new(mode = "RGB", size = (app.width,app.height), color = app.imageColor)
-    img.save(f'{app.imgName}.jpg')
-
-    return img
-
-def getTile(app, mouseX, mouseY, screenSize, map, onlyRendered = False):
-    if map == None: return None
-    if map.tileList.size == 0: return None
-
-    loc = getRelativeTile(mouseX, mouseY, screenSize, map)
-    if loc == None: return None
-    row, col = loc
-
-    renderedMap = map.getRenderedMap()
-    if renderedMap == None: renderedMap = map
-
-    relativeRow,relativeCol = getRelativeTile(mouseX, mouseY, screenSize, map)
-
-    if 0<=relativeRow<len(renderedMap.tileList) and 0 <= relativeCol < len(renderedMap.tileList[0]):
-        tile = renderedMap.tileList[relativeRow, relativeCol]
-        return tile.row, tile.col
-
-    else: return None
-
-def getRelativeTile(mouseX, mouseY, screenSize, map):
-    if map == None: return None
-    if map.tileList.size == 0: return None
-    else:
-        renderedMap = map.getRenderedMap()
-        if renderedMap == None: renderedMap = map
-        tile0 = map.tileList[0,0]
-        tileWidth, tileHeight = tile0.getSize()
-
-        startX,startY = MapRenderer.getMapStartLocation(screenSize, tile0.getSize(), len(renderedMap.tileList), len(renderedMap.tileList[0]))
-
-        startX += tileWidth
-        startY -= (-1 * tileHeight)//2
-        row = math.floor((mouseX - startX)/tileWidth + (mouseY - startY)/tileHeight) + 1
-        col = math.floor((mouseY - startY)/tileHeight - (mouseX - startX)/tileWidth)
-
-        x = col
-        y = row
-      
-        return x,y
-    
-def takeNextTurn(app):
-    for civilization in app.players:
-        civilization.updateAllYields()        
-    # app.players[0].settlements[0].harvestResources()
-    print(f"Civilization - production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
-            food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
-    app.players[0].useProduction()
-
+ 
 def onKeyPress(app,key):
-    if key == 'r':
-        tileSprite = Sprite(app.tileImage)
-        # app.map = MapRenderer.generateRepeatMap(app.mapRenderer, (app.mapRows,app.mapCols), None)
-        app.map = MapRenderer.generateRandomMap(app.mapRenderer, app, (app.mapRows,app.mapCols))
+    currentPlayer = app.players[app.currentPlayerID]
 
-        app.map.tileList[0,0].changeSprite(Tile.defaultSprites['green_tile'])
-        app.currentViewRow, app.currentViewCol = getTile(app, app.width//2, app.height//2,(app.width,app.height), app.map)
-        app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewRow,app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
-    elif key == 's':
+    if key == 's':
         if app.currentTile != None:
             row,col = app.currentTile
-            settlement = Settlement(app, app.map.tileList[row,col], app.players[0], app.mapRenderer)
+            settlement = Settlement(app, app.map.tileList[row,col], currentPlayer, app.mapRenderer)
             settlement.instantiate()
-            print(len(app.players[0].settlements))
+            print(len(currentPlayer.settlements))
     elif key == 'a':
         if app.currentTile != None:
             row,col = app.currentTile
@@ -194,16 +138,16 @@ def onKeyPress(app,key):
             print(tile.getRelativeLoc(app.map))
             
     elif key == 'd':
-        app.players[0].settlements[0].builder.setUnit(Warrior(app.players[0], app))
+        currentPlayer.settlements[0].builder.setUnit(Warrior(currentPlayer, app))
 
     elif key == 'n':
-        takeNextTurn(app)
+        app.gameManager.endPlayerTurn(app)
     elif key == 'p':
         if app.currentTile != None:
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             # if app.map.tileList[row,col] in app.players[0].getCivilizationTiles():
-            if tile.civilization == app.players[0]:
+            if tile.civilization == currentPlayer:
                settlement = tile.settlement
                if tile not in settlement.harvestedTiles: settlement.harvestedTiles.add(tile)
                else: settlement.harvestedTiles.remove(tile)
@@ -219,26 +163,22 @@ def onKeyPress(app,key):
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewRow += 1
-        clearScreen(app)
+        app.gameManager.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'down' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewRow -=1
-        clearScreen(app)
+        app.gameManager.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'right' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewCol += 1
-        clearScreen(app)
+        app.gameManager.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     elif key == 'left' and app.map.tileList.size !=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewCol -= 1
-        clearScreen(app)
+        app.gameManager.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
     
-def clearScreen(app):
-    app.img = loadScreen(app, None)
-
 runApp()
-
