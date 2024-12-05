@@ -67,7 +67,7 @@ class ResourceType(ABC):
 
 class Production(ResourceType):
     def __init__(self):
-        self.name = 'production'
+        self.name = 'Production'
         self.imagePath = 'sprites/small_gear.png'
         self.image = Image.open(self.imagePath)
 
@@ -91,7 +91,7 @@ class Production(ResourceType):
     
 class Food(ResourceType):
     def __init__(self):
-        self.name = 'food'
+        self.name = 'Food'
         self.imagePath = 'sprites/small_apple.png'
         self.image = Image.open(self.imagePath)
 

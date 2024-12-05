@@ -15,7 +15,7 @@ class Tile():
     defaultBorderColor = [0,0,0]
     highlightColor = [255,0,0]
 
-    def __init__(self, mapRenderer, row, col, type, sprite = tileShape):
+    def __init__(self, mapRenderer, row, col, type, sprite = Sprite(tileShape)):
         self.mapRenderer = mapRenderer
         self.col = col # col in map
         self.row = row # row in map
@@ -27,10 +27,15 @@ class Tile():
         self.civilization = None
         self.settlement = None
         self.movableUnit = None
+        self.settlementColorSprite = None
+        self.dSettlementColor = [0,0,75]
+
+        assert(isinstance(self.sprite, Sprite))
 
 
         if type != None:
             self.sprite = type.getDefaultSprite()
+        # self.settlementColorSprite = Tile.getRecoloredSprite(self.sprite, self.dSettlementColor)
 
     def __repr__(self):
         return f'Tile(row:{self.row},col:{self.col})'
@@ -62,10 +67,18 @@ class Tile():
             self.resourceIcon = ResourceIcon(self, app)
 
     # Changes sprite without making an alias
-    def changeSprite(self, newSprite):
+    def changeSprite(self, newSprite, app, changeSettlementSprite = False, redraw = False):
         self.sprite = newSprite
+        if changeSettlementSprite == False: self.settlementColorSprite = None
+        # self.settlementColorSprite = Tile.getRecoloredSprite(self.sprite, self.dSettlementColor)
+        if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, (app.width, app.height),
+                            app.map, app.mapRenderer)
 
     def getSprite(self):
+        if self.settlement != None: return self.getRecoloredSprite(self.sprite,self.dSettlementColor)
+        else: return self.sprite
+    
+    def getUnmodifiedSprite(self):
         return self.sprite
     
     def getSize(self):
@@ -73,12 +86,30 @@ class Tile():
     
     def setType(self,type,app):
         self.type = type
-        self.sprite = type.getDefaultSprite()
+        # self.sprite = type.getDefaultSprite()
+        self.changeSprite(type.getDefaultSprite(),app, redraw = True)
+        self.settlementColorSprite = None
+
         Tile.implementTypeResources(self,app)
 
     def getType(self):
         return self.type
 
+    def getRecoloredSprite(self, sprite, dColor):
+        if self.settlementColorSprite == None:
+            data = sprite.getData()
+            rows, cols = len(data), len(data[0])
+            for row in range(rows):
+                for col in range(cols):
+                    if data[row,col,:3].tolist() != [255,255,255]:
+                        data[row,col,0] = (data[row,col,0] + dColor[0])%255
+                        data[row,col,1] = (data[row,col,1] + dColor[1])%255
+                        data[row,col,2] = (data[row,col,2] + dColor[2])%255
+            
+            newSprite = Sprite(Image.fromarray(data[:,:,:3], mode = "RGB"))
+
+            self.settlementColorSprite = newSprite
+        return self.settlementColorSprite
 
     @staticmethod
     def getRealLoc(relativeRow, relativeCol, map):
@@ -102,7 +133,7 @@ class Tile():
 
 
     @staticmethod
-    def changeTileBorder(tile, borderColor):
+    def changeTileBorder(tile, borderColor, app):
         borderData = Tile.getSpriteByName('empty').getData()
         newSpriteData = tile.getSprite().getData()
         rows, cols = len(borderData), len(borderData[0])
@@ -114,7 +145,7 @@ class Tile():
 
 
         img = Image.fromarray(newSpriteData, mode = "RGB")
-        tile.changeSprite(Sprite(img))
+        tile.changeSprite(Sprite(img), app, changeSettlementSprite = True)
         
     @staticmethod
     def getSpriteByName(name):
@@ -144,13 +175,13 @@ class Tile():
         return screenX, screenY
     
     @staticmethod
-    def changeHighlight(tile, viewMapLoc, map, mapRenderer, screenSize, spriteDrawer):
+    def changeHighlight(tile, app, viewMapLoc, map, mapRenderer, screenSize, spriteDrawer):
         color = []
         if tile.isHighlighted: color = Tile.defaultBorderColor
         else: color = Tile.highlightColor    
 
         tile.isHighlighted = not tile.isHighlighted
-        Tile.changeTileBorder(tile, color)
+        Tile.changeTileBorder(tile, color, app)
         Tile.redrawTile(tile, viewMapLoc, spriteDrawer, screenSize, map, mapRenderer)
 
     @staticmethod
@@ -161,9 +192,3 @@ class Tile():
             if (renderedMap.lowerY<=row<renderedMap.upperY) and (renderedMap.lowerX <=col<renderedMap.upperX):
                 return row - renderedMap.lowerY, col - renderedMap.lowerX
             else: return None
-    # @staticmethod
-    # def realToRelativeLoc(row,col, map, currentViewMapRow, currentViewMapCol):
-    #     relativeRow = row - (currentViewMapRow - len(map.tileList)//2)
-    #     relativeCol = col - (currentViewMapCol - len(map.tileList[0])//2)
-
-    #     return relativeRow, relativeCol

@@ -119,7 +119,7 @@ class MapRenderer:
         rows,cols = len(tileList), len(tileList[0])
 
         y, x = viewMapLoc
-        print(f'x:{x},y:{y}')
+        # print(f'x:{x},y:{y}')
         renderedRows, renderedCols = app.viewRowSize, app.viewColSize        
         xLowerBound = x - renderedCols//2
         yLowerBound = y - renderedRows//2

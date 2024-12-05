@@ -18,7 +18,7 @@ class Builder():
             if self.costRemaining <= 0: 
                 self.costRemaining = 0
                 self.unit.instantiate((self.settlement.row - 1, self.settlement.col))
-            print(self.costRemaining)
+            print(f'costRemaining: {self.costRemaining}')
 
 
     def getCostRemaining(self):
@@ -43,9 +43,14 @@ class BuildableUnit(ABC):
 
 class MovableUnit(BuildableUnit):
     
-    # def move(self, newLoc):
-    #     oldRow,oldCol = self.location
-    #     oldTile = self.app.map
+    def move(self, app, newLoc):
+        oldRow,oldCol = self.location
+        tile = self.app.map.tileList[oldRow,oldCol]
+        tile.movableUnit = None
+        self.location = newLoc
+        newTile = app.map.tileList[newLoc[0],newLoc[1]]
+        newTile.movableUnit = self
+        
     @abstractmethod
     def getProductionCost(self):
         pass
@@ -80,13 +85,13 @@ class Warrior(MovableUnit):
     def getSprite(self):
         return self.sprite
     
-    def move(self, newLoc):
-        oldRow,oldCol = self.location
-        tile = self.app.map.tileList[oldRow,oldCol]
-        tile.movableUnit = None
-        self.location = newLoc
-        newTile = self.app.map.tileList[newLoc[0],newLoc[1]]
-        newTile.movableUnit = self
+    # def move(self, newLoc):
+    #     oldRow,oldCol = self.location
+    #     tile = self.app.map.tileList[oldRow,oldCol]
+    #     tile.movableUnit = None
+    #     self.location = newLoc
+    #     newTile = self.app.map.tileList[newLoc[0],newLoc[1]]
+    #     newTile.movableUnit = self
     
     def getSpriteLoc(self):
         # numOfResources = len(resources)

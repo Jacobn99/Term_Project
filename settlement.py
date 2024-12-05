@@ -4,6 +4,7 @@ from map_render import Map, MapRenderer
 from tile_types import *
 from resources import ResourceStack
 from buildable_units import Builder
+from ui import SettlementUI
 
 class Settlement():
     def __init__(self, app, tile, civilization, mapRenderer):
@@ -21,6 +22,7 @@ class Settlement():
         self.builder = Builder(self)
         self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
                              ResourceStack.ResourceTypes['food'] : 0}
+        self.settlementUI = SettlementUI(app, self, app.gameManager)
 
     def __repr__(self):
         return f'settlement(row={self.row}, col={self.col})'
@@ -31,6 +33,9 @@ class Settlement():
     def __hash__(self):
         return hash(str(self))
     
+    def displayUI(self):
+        self.settlementUI.display(self.app)
+
     def getYields(self, resourceType):
         if resourceType not in self.yieldsByType: return 0
         else: return self.yieldsByType[resourceType]
@@ -39,7 +44,7 @@ class Settlement():
         ResourceStack.addStackToSettlement(stack,self)
 
     def updateYields(self):
-        self.resetYieldsByType()
+        # self.resetYieldsByType()
         self.harvestResources()
 
         # for tile in self.harvestedTiles:
@@ -54,6 +59,7 @@ class Settlement():
     # def updateResources()
 
     def harvestResources(self):
+        self.resetYieldsByType()
         for tile in self.harvestedTiles:
             resources = tile.getResources()
             if resources == []: continue
@@ -62,18 +68,20 @@ class Settlement():
                     # ResourceStack.addStackToCivilization(stack, self.civilization)
                     # self.civilization.addYield(stack)
                     self.addYield(stack)
-        # print(self.yieldsByType)
+        print(self.yieldsByType)
 
     def instantiate(self):
         tile = self.app.map.tileList[self.row, self.col]
-        Settlement.colorSettlementTiles(self.app, self)
+        # Settlement.colorSettlementTiles(self.app, self)
         tile.setType(SettlementCenter(), self.app)
         for tile in self.getSettlementTiles().flatten():
             tile.civilization = self.civilization
             tile.settlement = self
+            tile.redrawTile(tile, (self.app.currentViewRow, self.app.currentViewCol), self.app.spriteDrawer, 
+                            (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
         # tile.changeSprite(Tile.defaultSprites['brown_tile'])
-        tile.redrawTile(tile, (self.app.currentViewRow,self.app.currentViewCol), self.app.spriteDrawer, 
-                        (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
+        # tile.redrawTile(tile, (self.app.currentViewRow,self.app.currentViewCol), self.app.spriteDrawer, 
+        #                 (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
         
     def getSettlementTiles(self):
         return self.settlementTiles
@@ -88,8 +96,8 @@ class Settlement():
                     tile.setType(ForestTile(), app)
                     # tile.setType(GrassTile(),app)
                     # tile.changeSprite(Tile.defaultSprites['green_tile'])
-                    tile.redrawTile(tile, (app.currentViewRow, app.currentViewCol), app.spriteDrawer, 
-                            (app.width, app.height), app.map, app.mapRenderer)
+                    # tile.redrawTile(tile, (app.currentViewRow, app.currentViewCol), app.spriteDrawer, 
+                    #         (app.width, app.height), app.map, app.mapRenderer)
 
     @staticmethod
     def createTileList(row, col, size, map):
@@ -99,8 +107,8 @@ class Settlement():
         lowerCol = col - size
         upperCol = col + size + 1
 
-        print(f'row + size: {row + size}')
-        print(min(rows, row + size))
+        # print(f'row + size: {row + size}')
+        # print(min(rows, row + size))
 
         lowerRow = max(0, lowerRow)
         upperRow = min(rows, upperRow)
@@ -108,7 +116,7 @@ class Settlement():
         upperCol = min(cols, upperCol)
 
 
-        print(lowerRow,upperRow, lowerCol, upperCol)
+        # print(lowerRow,upperRow, lowerCol, upperCol)
 
         settlementTiles = map.tileList[lowerRow:upperRow, lowerCol:upperCol]
         return settlementTiles

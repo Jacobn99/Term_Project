@@ -2,7 +2,7 @@ from resources import ResourceStack
 import numpy as np
 
 class Civilization:
-    id = 0
+    id = -1
     def __init__(self):
         self.settlements = []
         self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
@@ -39,6 +39,7 @@ class Civilization:
             result = np.union1d(result, settlement.settlementTiles.flatten())
         return result
     
+
     def updateAllYields(self):
         self.resetYieldsByType()
         for settlement in self.settlements:
@@ -47,6 +48,9 @@ class Civilization:
                 # print(key, settlement.yieldsByType[key])
                 if type in self.yieldsByType:
                     self.yieldsByType[type] += settlement.yieldsByType[type]
+
+    # def updateAllProduction
+
 
     def addYield(self, stack):
         ResourceStack.addStackToCivilization(stack, self)

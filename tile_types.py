@@ -10,10 +10,13 @@ class TileType(ABC):
     @abstractmethod
     def getResourceTable(self):
         pass
-
+    
 class ForestTile(TileType):
     def __init__(self):
         pass
+
+    def __eq__(self,other):
+        return isinstance(other, ForestTile)
 
     def getDefaultSprite(self):
         treeTile = Image.open("sprites/tree_tile.png")
@@ -26,6 +29,9 @@ class GrassTile(TileType):
     def __init__(self):
         pass
 
+    def __eq__(self,other):
+        return isinstance(other, GrassTile)
+
     def getDefaultSprite(self):
         treeTile = Image.open("sprites/grass_tile.png")
         return Sprite(treeTile)
@@ -37,6 +43,9 @@ class RockTile(TileType):
     def __init__(self):
         pass
 
+    def __eq__(self,other):
+        return isinstance(other, RockTile)
+
     def getDefaultSprite(self):
         treeTile = Image.open("sprites/rock_tile.png")
         return Sprite(treeTile)
@@ -47,6 +56,9 @@ class RockTile(TileType):
 class SettlementCenter(TileType):
     def __init__(self):
         pass
+
+    def __eq__(self,other):
+        return isinstance(other, SettlementCenter)
 
     def getDefaultSprite(self):
         brownTile = Image.open("sprites/brown_tile.png")
