@@ -131,7 +131,7 @@ def onMouseMove(app, mouseX,mouseY):
         if tile.movableUnit != None:
             hoveredUnit = tile.movableUnit
 
-    if app.currentUnit != None and hoveredUnit != app.currentUnit:
+    if app.currentUnit != None and hoveredUnit != app.currentUnit and app.currentUnit.isAlive:
         app.currentUnit.hideHPDisplay(app)
 
     elif hoveredUnit != None and mapLoc!=app.currentTile:
@@ -144,6 +144,7 @@ def onMouseMove(app, mouseX,mouseY):
         
 def onMousePress(app, mouseX,mouseY):
     pauseInteractables = False
+    currentPlayer = app.players[app.currentPlayerID]
 
     for ui in app.interactableUI.copy():
         if ui.inBounds(mouseX,mouseY): ui.execute(app)
@@ -157,12 +158,17 @@ def onMousePress(app, mouseX,mouseY):
         currentUnit = tile.movableUnit
 
         if currentUnit != None:
-            if app.lastClickedUnit not in app.hasMoved and app.lastClickedUnit != None and currentUnit != app.lastClickedUnit and currentUnit.civilization != app.lastClickedUnit.civilization:
-                currentUnit.changeHP(-app.lastClickedUnit.attackDamage)
-                app.hasMoved.add(currentUnit)
+            if (app.lastClickedUnit not in app.hasMoved 
+                and app.lastClickedUnit != None
+                and app.lastClickedUnit
+                and currentUnit != app.lastClickedUnit 
+                and currentUnit.civilization != currentPlayer 
+                and app.lastClickedUnit.civilization
+                and app.lastClickedUnit.isOffensive):
+                app.lastClickedUnit.attack(currentUnit)
             app.isMoving = True
             app.prevClickTile = tile
-        elif app.isMoving and app.prevClickTile!=None:
+        elif app.isMoving and app.prevClickTile != None:
             unit = app.prevClickTile.movableUnit
             unit.move(app, app.currentTile)
             app.isMoving = False
@@ -178,8 +184,8 @@ def onMousePress(app, mouseX,mouseY):
             if tile in tile.settlement.harvestedTiles:
                 text = 'Remove population?'
             
-            populationButton = PopulationButton(app.gameManager, location, (130, 50), 'darkSlateGray', 
-                                                None, tile, text = 'Place population?', textSize=13)
+            populationButton = PopulationButton(app.gameManager, location, (130, 50), 'gray',
+                                                None, tile, text = text, textSize=13)
             populationButton.display(app)
 
         app.lastClickedUnit = currentUnit

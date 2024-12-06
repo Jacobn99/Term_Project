@@ -190,6 +190,31 @@ class PopulationButton(Button):
 
         self.removeAll(app)
 
+class SettlementButton(Button):
+    def __init__(self, gameManager, location, size, color, parentUI, settler, text = None, textSize = None):
+        self.parentUI = parentUI
+        self.gameManager = gameManager
+        self.x, self.y = location
+        self.width, self.height = size
+        self.color = color
+        self.interactable = True
+        self.elements = set()
+        self.text = text
+        self.exitMethod = 'click off'
+        self.textSize = textSize
+        self.settler = settler
+        self.label = CustomLabel('Created Settlement!', 30, (app.width//2, 50), color = 'gold', time = 30, bold = True)
+
+        if self.parentUI != None:
+            parentUI.elements.add(self)
+
+        app.exitMethodsToSet[self.exitMethod].add(self)
+    
+    def execute(self, app):
+        self.settler.createSettlement
+        self.removeAll(app)
+
+
 class SettlementUI(drawableUI):
     def __init__(self, app, settlement, gameManager):
         self.gameManager = gameManager
@@ -272,6 +297,7 @@ class ProductionOptionButton(Button):
         unitClass = app.unitTypes[self.unitStr]
         unit = unitClass(self.parentUI.settlement.civilization, app)
         self.parentUI.startMakingUnit(app, unit)
+
 
 class ProductionMenu(drawableUI):
     def __init__(self, app, settlement, gameManager):

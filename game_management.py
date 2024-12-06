@@ -78,6 +78,7 @@ class GameManager:
         app.currentViewRow += 1
         self.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, (app.tileWidth,app.tileHeight))
+        app.hasMoved = set()
 
     def clearScreen(self, app):
         app.img = self.loadScreen(app, None)

@@ -4,7 +4,7 @@ from map_render import Map, MapRenderer
 from tile_types import *
 from resources import ResourceStack
 from buildable_units import Builder
-from ui import SettlementUI, Button
+from ui import SettlementUI
 
 class Settlement():
     def __init__(self, app, tile, civilization, mapRenderer):
@@ -23,6 +23,7 @@ class Settlement():
         self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
                              ResourceStack.ResourceTypes['food'] : 0}
         self.settlementUI = SettlementUI(app, self, app.gameManager)
+        
 
     def __repr__(self):
         return f'settlement(row={self.row}, col={self.col})'

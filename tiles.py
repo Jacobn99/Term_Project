@@ -69,8 +69,8 @@ class Tile():
     def changeSprite(self, newSprite, app, redraw = False):
         self.sprite = newSprite
         # if self.settlement!=None: self.settlementColorSprites = self.getRecoloredSprite(self.sprite, self.dSettlementColor)
-        if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, (app.width, app.height),
-                            app.map, app.mapRenderer)
+        if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, 
+        (app.width, app.height), app.map, app.mapRenderer)
 
     def getSprite(self):
         # if self.settlement!=None: return self.getRecoloredSprite(self.sprite, self.dSettlementColor)

@@ -3,6 +3,7 @@ from sprite import Sprite
 import PIL as pil
 from resources import ResourceStack
 from ui import *
+from settlement import Settlement
 
 
 class Builder():
@@ -45,32 +46,17 @@ class BuildableUnit(ABC):
 class MovableUnit(BuildableUnit):
     
     def move(self, app, newLoc):
-        oldRow,oldCol = self.location
-        tile = self.app.map.tileList[oldRow,oldCol]
-        tile.movableUnit = None
-        self.location = newLoc
-        newTile = app.map.tileList[newLoc[0],newLoc[1]]
-        newTile.movableUnit = self
-        app.hasMoved.add(self)
-        
-    @abstractmethod
-    def getProductionCost(self):
-        pass
+        if self not in app.hasMoved:
+            oldRow,oldCol = self.location
+            tile = self.app.map.tileList[oldRow,oldCol]
+            tile.movableUnit = None
+            self.location = newLoc
+            newTile = app.map.tileList[newLoc[0],newLoc[1]]
+            newTile.movableUnit = self
+
+            app.hasMoved.add(self)
+
     
-
-class Warrior(MovableUnit):
-    warriorSprite = Sprite(pil.Image.open("sprites/warrior.png"))
-    # in drawUnits, all units in given set will be drawn
-    def __init__(self, civilization, app):
-        self.civilization = civilization
-        self.app = app
-        self.location = None
-        self.sprite = Warrior.warriorSprite
-        self.productionCost = 0
-        self.hp = 100
-        self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
-        self.attackDamage = 25
-
     def getProductionCost(self):
         return self.productionCost
 
@@ -98,39 +84,91 @@ class Warrior(MovableUnit):
         return self.sprite
     
     def displayHP(self, app):
-        self.updateHP()
-        print('displaying :(')
-        self.hpLabel.display(app)
+        self.updateHP(app)
+        self.getHPLabel().display(app)
 
     def hideHPDisplay(self,app):
-        print('got here hiding now')
-        self.hpLabel.removeAll(app)
+        self.getHPLabel().removeAll(app)
 
     def getHPLabel(self):
         return self.hpLabel
-
-    def updateHP(self):
-        if self.hp <= 0: self.die()
+        
+    def updateHP(self,app):
+        if self.hp <= 0: self.die(app)
         else:
             self.hpLabel.setText(f'HP:{self.hp}')
             self.hpLabel.x, self.hpLabel.y = self.getTileScreenLocation(app) 
     
-    def changeHP(self, dHP):
+    def changeHP(self, dHP, app):
         self.hp += dHP
-        self.updateHP()
+        self.updateHP(app)
 
     def getHP(self):
         return self.hp
     
-    def die(self):
+    def die(self,app):
         row,col = self.location
         tile = app.map.tileList[row,col]
 
-        self.hpLabel.removeAll()
+        self.hpLabel.removeAll(app)
         self.hpLabel = None
         self.civilization = None
         tile.movableUnit = None
         if self in self.app.drawableUnits: self.app.drawableUnits.remove(self)
-        
+        self.isAlive = False
+    
 
-        
+class Warrior(MovableUnit):
+    warriorSprite = Sprite(pil.Image.open("sprites/warrior.png"))
+    # in drawUnits, all units in given set will be drawn
+    def __init__(self, civilization, app):
+        self.civilization = civilization
+        self.app = app
+        self.location = None
+        self.sprite = Warrior.warriorSprite
+        self.productionCost = 0
+        self.hp = 100
+        self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
+        self.attackDamage = 35
+        self.isAlive = True
+        self.isOffensive = True
+
+    def attack(self, otherUnit):
+        if self not in self.app.hasMoved:
+            otherUnit.changeHP(-self.app.lastClickedUnit.attackDamage, app)
+            self.app.hasMoved.add(self)
+
+
+class Settler(MovableUnit):
+    settlerSprite = Sprite(pil.Image.open("sprites/settler.png"))
+    # in drawUnits, all units in given set will be drawn
+    def __init__(self, civilization, app):
+        self.civilization = civilization
+        self.app = app
+        self.location = None
+        self.sprite = Settler.settlerSprite
+        self.productionCost = 0
+        self.hp = 10
+        self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
+        self.isAlive = True
+        self.isOffensive = False
+        self.attackDamage = 0
+        self.settlementButton = None
+
+    def getSettlementButton(self):
+        if self.settlementButton == None:
+            self.settleButton = SettlementButton(self.app.gameManager, self.location, (200,100), 'gray', None, self, 'Settle?', 20)
+
+    def displaySettlementButton(self):
+        self.settlementButton.display(app)
+
+    def hideSettlementButton(self):
+        self.getHPLabel().removeAll(app)
+
+
+
+    def makeSettlement(self):
+        tile = self.map.tileList[self.location[0],self.location[1]]
+        settlement = Settlement(self.app, tile, self.civilization, self.app.mapRenderer)
+        settlement.instantiate()
+        self.die(self.app)
