@@ -28,7 +28,7 @@ class Tile():
         self.settlement = None
         self.movableUnit = None
         self.settlementColorSprite = None
-        self.dSettlementColor = [0,0,75]
+        self.dSettlementColor = [0,0,-20]
 
         assert(isinstance(self.sprite, Sprite))
 
@@ -67,15 +67,16 @@ class Tile():
             self.resourceIcon = ResourceIcon(self, app)
 
     # Changes sprite without making an alias
-    def changeSprite(self, newSprite, app, changeSettlementSprite = False, redraw = False):
+    def changeSprite(self, newSprite, app, SchangeSettlementprite = False, redraw = False):
         self.sprite = newSprite
-        if changeSettlementSprite == False: self.settlementColorSprite = None
+        self.settlementColorSprite = Tile.getRecoloredSprite(self, self.sprite, self.dSettlementColor, True)
+        # if changeSettlementSprite == False: self.settlementColorSprite = None
         # self.settlementColorSprite = Tile.getRecoloredSprite(self.sprite, self.dSettlementColor)
         if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, (app.width, app.height),
                             app.map, app.mapRenderer)
 
-    def getSprite(self):
-        if self.settlement != None: return self.getRecoloredSprite(self.sprite,self.dSettlementColor)
+    def getSprite(self, recolored = True):
+        if self.settlement != None and recolored: return self.getRecoloredSprite(self.sprite,self.dSettlementColor)
         else: return self.sprite
     
     def getUnmodifiedSprite(self):
@@ -95,18 +96,19 @@ class Tile():
     def getType(self):
         return self.type
 
-    def getRecoloredSprite(self, sprite, dColor):
+    def getRecoloredSprite(self, sprite, dColor, border = True):
         if self.settlementColorSprite == None:
             data = sprite.getData()
             rows, cols = len(data), len(data[0])
             for row in range(rows):
                 for col in range(cols):
                     if data[row,col,:3].tolist() != [255,255,255]:
-                        data[row,col,0] = (data[row,col,0] + dColor[0])%255
-                        data[row,col,1] = (data[row,col,1] + dColor[1])%255
-                        data[row,col,2] = (data[row,col,2] + dColor[2])%255
+                        for i in range(3):
+                            value = int(data[row,col,i])
+                            data[row,col,i] = (value + dColor[i])%255
             
             newSprite = Sprite(Image.fromarray(data[:,:,:3], mode = "RGB"))
+            # if border: newSprite = self.changeSpriteBorder(newSprite, [0,0,20])
 
             self.settlementColorSprite = newSprite
         return self.settlementColorSprite
@@ -134,8 +136,13 @@ class Tile():
 
     @staticmethod
     def changeTileBorder(tile, borderColor, app):
+        newSprite = Tile.changeSpriteBorder(tile.getSprite(),borderColor)
+        tile.changeSprite(newSprite, app)
+   
+    @staticmethod
+    def changeSpriteBorder(sprite, borderColor):
         borderData = Tile.getSpriteByName('empty').getData()
-        newSpriteData = tile.getSprite().getData()
+        newSpriteData = sprite.getData()
         rows, cols = len(borderData), len(borderData[0])
 
         for row in range(rows):
@@ -145,8 +152,8 @@ class Tile():
 
 
         img = Image.fromarray(newSpriteData, mode = "RGB")
-        tile.changeSprite(Sprite(img), app, changeSettlementSprite = True)
-        
+        return Sprite(img)
+
     @staticmethod
     def getSpriteByName(name):
         if name in Tile.defaultSprites:
