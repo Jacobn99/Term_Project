@@ -227,6 +227,10 @@ def onKeyPress(app,key):
             tile.movableUnit.civilization == currentPlayer):
                 tile.movableUnit.getSettlementButton().display(app)
 
+    if key == 'g':
+        if app.currentTile != None:
+            app.players[1].createSettlement(tile, app)
+
     elif key == 'd':
         if app.currentTile != None:
             tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
