@@ -114,14 +114,8 @@ class MapRenderer:
         
         renderedMap = Map(tileList[yLowerBound:yUpperBound, xLowerBound:xUpperBound], 
                           (xLowerBound, xUpperBound, yLowerBound, yUpperBound))
-        # print("bounds:", (xLowerBound, xUpperBound), (yLowerBound, yUpperBound))
-        # print(renderedMap.tileList[:,0])
-        # print(f'rows: {len(renderedMap.tileList)}, cols: {len(renderedMap.tileList[0])}')
-
-        # m[xLowerBound:xUpperBound, yLowerBound: yUpperBound] = 1
+       
         map.setRenderedMap(renderedMap)
-        # print(renderedMap.tileList)
-        # print(m)
         return renderedMap
     
     @staticmethod
@@ -132,8 +126,6 @@ class MapRenderer:
 
         desiredRows = screenHeight//tileHeight
         desiredCols = screenWidth//tileWidth
-
-        # print(f'maxRows: {maxRows}, maxCols: {maxCols}, desiredRows: {desiredRows}, desiredCols: {desiredCols}')
 
         return min(desiredRows,maxRows), min(desiredCols,maxCols)
     

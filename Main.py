@@ -226,21 +226,6 @@ def onKeyPress(app,key):
             if (isinstance(tile.movableUnit, Settler) and
             tile.movableUnit.civilization == currentPlayer):
                 tile.movableUnit.getSettlementButton().display(app)
-            else:
-                row,col = app.currentTile
-                settlement = Settlement(app, app.map.tileList[row,col], currentPlayer, app.mapRenderer)
-                settlement.instantiate()
-            
-
-    elif key == 'a':
-        if app.currentTile != None:
-            row,col = app.currentTile
-            tile = app.map.tileList[row,col]
-            print(tile.getType())
-            print(tile.getRelativeLoc(tile.row,tile.col,app.map))
-            
-    elif key == 'w':
-        currentPlayer.settlements[0].builder.setUnit(Settler(currentPlayer, app))
 
     elif key == 'd':
         if app.currentTile != None:
@@ -250,21 +235,7 @@ def onKeyPress(app,key):
 
     elif key == 'n':
         app.gameManager.endPlayerTurn(app)
-    elif key == 'p':
-        if app.currentTile != None:
-            row,col = app.currentTile
-            tile = app.map.tileList[row,col]
-            if tile.civilization == currentPlayer:
-               settlement = tile.settlement
-               if tile not in settlement.harvestedTiles: 
-                   settlement.harvestedTiles.add(tile)
-               else: settlement.harvestedTiles.remove(tile)
-            
-    elif key.isdigit() and 1 <=int(key) <= 3:
-        if app.currentTile != None:
-            types = List(Tile.tileTypes)    
-            row,col = app.currentTile
-            tile = app.map.tileList[row,col]
+    
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewRow += 1
