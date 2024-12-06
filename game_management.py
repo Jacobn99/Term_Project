@@ -62,7 +62,7 @@ class GameManager:
         # if len(app.players[app.currentPlayerID].settlements) > 0:
         #     print(f'PlayerID: {app.currentPlayerID}, harvestedTile: {app.players[app.currentPlayerID].settlements[0].harvestedTiles}')
         self.changePlayer(app, app.players[app.currentPlayerID])
-    
+
     def takeNextTurn(self, app):
         for civilization in app.players:
             civilization.updateAllYields()        

@@ -4,7 +4,7 @@ from map_render import Map, MapRenderer
 from tile_types import *
 from resources import ResourceStack
 from buildable_units import Builder
-from ui import SettlementUI
+from ui import SettlementUI, Button
 
 class Settlement():
     def __init__(self, app, tile, civilization, mapRenderer):
@@ -77,6 +77,8 @@ class Settlement():
         for tile in self.getSettlementTiles().flatten():
             tile.civilization = self.civilization
             tile.settlement = self
+            # tile.recolorSprite(tile.sprite, tile.dSettlementColor)
+            # tile.changeSprite(tile.getRecoloredSprite(tile.getSprite(), tile.dSettlementColor), self.app)
             tile.redrawTile(tile, (self.app.currentViewRow, self.app.currentViewCol), self.app.spriteDrawer, 
                             (self.app.width, self.app.height), self.app.map, self.app.mapRenderer)
         # tile.changeSprite(Tile.defaultSprites['brown_tile'])

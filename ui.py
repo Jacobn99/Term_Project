@@ -1,7 +1,7 @@
 from cmu_graphics import *
 from abc import ABC, abstractmethod
 import PIL as pl
-from buildable_units import *
+# from buildable_units import *
 
 
 # Class has abstract methods for debugging purposes
@@ -33,8 +33,8 @@ class drawableUI(ABC):
 
     @abstractmethod
     def getExitMethod(self):
-        pass
-
+        pass        
+    
     def removeAll(self,app):
         self.remove(app)
 
@@ -43,7 +43,6 @@ class drawableUI(ABC):
 
     def remove(self, app):
         exitMethod = self.getExitMethod()
-        print(self in app.renderedUI, self in app.interactableUI)
         if self in app.renderedUI:
             app.renderedUI.remove(self)
         if self in app.interactableUI:
@@ -72,8 +71,49 @@ class drawableUI(ABC):
                 elementY <= y <= elementY + height)
     
 
+class CustomLabel():
+    def __init__(self, text,size, screenLocation, color = 'black', time = None, bold=False):
+        self.text = text
+        self.size = size
+        self.time = time
+        self.x,self.y = screenLocation
+        self.color = color
+        self.bold = bold
+
+    def __repr__(self):
+        return f'CustomLabel({self.text})'
+    
+    def __eq__(self,other):
+        return isinstance(other,CustomLabel) and other.text == self.text and other.time == self.time
+    
+    def __hash__(self):
+        return hash(str(self))
+
+    def display(self, app):
+        app.renderedUI.append(self)
+        if self.time!=None:
+            app.timedUI[self] = self.time
+
+    def removeAll(self,app):
+        if self in app.renderedUI: app.renderedUI.remove(self)
+
+    def setText(self, newText):
+        self.text = newText
+
+    def getTime(self):
+        return self.time
+    
+    def getSize(self):
+        return self.size
+    
+    def getText(self):
+        return self.text
+    
+    def drawAll(self, app):
+        drawLabel(self.text, self.x,self.y, fill = self.color, size = self.size, bold = self.bold) 
+
 class Button(drawableUI):
-    def __init__(self, gameManager, location, size, color, parentUI, function):
+    def __init__(self, gameManager, location, size, color, parentUI, function, text = None, textSize = None):
         self.parentUI = parentUI
         self.gameManager = gameManager
         self.x, self.y = location
@@ -82,12 +122,20 @@ class Button(drawableUI):
         self.color = color
         self.interactable = True
         self.elements = set()
+        self.text = text
+        self.exitMethod = 'click off'
+        self.textSize = textSize
 
         if self.parentUI != None:
             parentUI.elements.add(self)
 
+        app.exitMethodsToSet[self.exitMethod].add(self)
+
     def execute(self, app):
-        if self.function != None: self.function(app)
+        if self.function != None: 
+            self.function(app)
+
+        self.removeAll(app)
     
     def getExitMethod(self):
         return None
@@ -105,11 +153,43 @@ class Button(drawableUI):
         return (self.width,self.height)
 
     def drawAll(self, app):
-        drawRect(self.x, self.y, self.width, self.height, fill = self.color)
+        drawRect(self.x, self.y, self.width, self.height, fill = self.color, border = 'black', borderWidth = self.height*0.1)
+        if self.text != None and self.textSize != None: 
+            drawLabel(self.text, self.x + self.width//2, self.y + self.height//2, size = self.textSize, bold = True)
 
     def setFunction(self, function):
         self.function = function
+
+class PopulationButton(Button):
+    def __init__(self, gameManager, location, size, color, parentUI, tile, text = None, textSize = None):
+        self.parentUI = parentUI
+        self.gameManager = gameManager
+        self.x, self.y = location
+        self.width, self.height = size
+        self.color = color
+        self.interactable = True
+        self.elements = set()
+        self.text = text
+        self.exitMethod = 'click off'
+        self.textSize = textSize
+        self.tile = tile
+        self.label = CustomLabel('Population Placed', 30, (app.width//2, 50), color = 'gold', time = 30, bold = True)
+
+        if self.parentUI != None:
+            parentUI.elements.add(self)
+
+        app.exitMethodsToSet[self.exitMethod].add(self)
     
+    def execute(self, app):
+        if self.tile.civilization == app.players[app.currentPlayerID]:
+            settlement = self.tile.settlement
+            if self.tile not in settlement.harvestedTiles: 
+                self.label.display(app)
+                settlement.harvestedTiles.add(self.tile)
+            else: settlement.harvestedTiles.remove(self.tile)
+
+        self.removeAll(app)
+
 class SettlementUI(drawableUI):
     def __init__(self, app, settlement, gameManager):
         self.gameManager = gameManager
@@ -127,9 +207,6 @@ class SettlementUI(drawableUI):
 
         app.exitMethodsToSet[self.exitMethod].add(self)
         self.initializeLabelVariables()
-
-    # def button1Function(self, app):
-    #     print('bazinga')
 
     def displayProductionMenu(self,app):
         self.productionMenu.display(app)
@@ -181,6 +258,8 @@ class ProductionOptionButton(Button):
         self.interactable = True
         self.elements = set()
         self.unitStr = unitStr
+        self.text = None
+        self.textSize = None
 
         if self.parentUI != None:
             parentUI.elements.add(self)
@@ -190,10 +269,9 @@ class ProductionOptionButton(Button):
     
     def execute(self, app):
         # print('here')
-        unitClass = self.parentUI.unitTypes[self.unitStr]
+        unitClass = app.unitTypes[self.unitStr]
         unit = unitClass(self.parentUI.settlement.civilization, app)
         self.parentUI.startMakingUnit(app, unit)
-
 
 class ProductionMenu(drawableUI):
     def __init__(self, app, settlement, gameManager):
@@ -207,7 +285,6 @@ class ProductionMenu(drawableUI):
         self.settlement = settlement
         self.interactable = False
         self.unitIcons = {'warrior' : pl.Image.open('sprites\warrior.png')}
-        self.unitTypes = {'warrior' : Warrior}
         self.currentUnit = None
 
         self.iconSpacing = 100

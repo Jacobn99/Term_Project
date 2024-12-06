@@ -27,7 +27,6 @@ class Tile():
         self.civilization = None
         self.settlement = None
         self.movableUnit = None
-        self.settlementColorSprite = None
         self.dSettlementColor = [0,0,-20]
 
         assert(isinstance(self.sprite, Sprite))
@@ -67,19 +66,14 @@ class Tile():
             self.resourceIcon = ResourceIcon(self, app)
 
     # Changes sprite without making an alias
-    def changeSprite(self, newSprite, app, SchangeSettlementprite = False, redraw = False):
+    def changeSprite(self, newSprite, app, redraw = False):
         self.sprite = newSprite
-        self.settlementColorSprite = Tile.getRecoloredSprite(self, self.sprite, self.dSettlementColor, True)
-        # if changeSettlementSprite == False: self.settlementColorSprite = None
-        # self.settlementColorSprite = Tile.getRecoloredSprite(self.sprite, self.dSettlementColor)
+        # if self.settlement!=None: self.settlementColorSprites = self.getRecoloredSprite(self.sprite, self.dSettlementColor)
         if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, (app.width, app.height),
                             app.map, app.mapRenderer)
 
-    def getSprite(self, recolored = True):
-        if self.settlement != None and recolored: return self.getRecoloredSprite(self.sprite,self.dSettlementColor)
-        else: return self.sprite
-    
-    def getUnmodifiedSprite(self):
+    def getSprite(self):
+        # if self.settlement!=None: return self.getRecoloredSprite(self.sprite, self.dSettlementColor)
         return self.sprite
     
     def getSize(self):
@@ -89,7 +83,6 @@ class Tile():
         self.type = type
         # self.sprite = type.getDefaultSprite()
         self.changeSprite(type.getDefaultSprite(),app, redraw = True)
-        self.settlementColorSprite = None
 
         Tile.implementTypeResources(self,app)
 
@@ -97,20 +90,23 @@ class Tile():
         return self.type
 
     def getRecoloredSprite(self, sprite, dColor, border = True):
-        if self.settlementColorSprite == None:
-            data = sprite.getData()
-            rows, cols = len(data), len(data[0])
-            for row in range(rows):
-                for col in range(cols):
-                    if data[row,col,:3].tolist() != [255,255,255]:
-                        for i in range(3):
-                            value = int(data[row,col,i])
-                            data[row,col,i] = (value + dColor[i])%255
-            
-            newSprite = Sprite(Image.fromarray(data[:,:,:3], mode = "RGB"))
-            # if border: newSprite = self.changeSpriteBorder(newSprite, [0,0,20])
+        # if self.settlementColorSprite == None:
+        data = sprite.getData()
+        rows, cols = len(data), len(data[0])
+        for row in range(rows):
+            for col in range(cols):
+                if data[row,col,:3].tolist() != [255,255,255]:
+                    for i in range(3):
+                        value = int(data[row,col,i])
+                        data[row,col,i] = (value + dColor[i])%255
+                    # data[row,col,0] = (data[row,col,0] + dColor[0])%255
+                    # data[row,col,1] = (data[row,col,1] + dColor[1])%255
+                    # data[row,col,2] = (data[row,col,2] + dColor[2])%255
+        
+        newSprite = Sprite(Image.fromarray(data[:,:,:3], mode = "RGB"))
+        if border: newSprite = self.changeSpriteBorder(newSprite, [0,0,20])
 
-            self.settlementColorSprite = newSprite
+        self.settlementColorSprite = newSprite
         return self.settlementColorSprite
 
     @staticmethod
@@ -171,10 +167,10 @@ class Tile():
         spriteDrawer.drawSprite(tile.getSprite(), screenX, screenY)
 
     @staticmethod
-    def mapToScreenCords(tileMapLoc, tileSize, screenSize, renderedMap, mapRenderer):
+    def mapToScreenCords(relativeTileMapLoc, tileSize, screenSize, renderedMap, mapRenderer):
         tileWidthHalf = tileSize[0]/2
         tileHeightHalf = tileSize[1]/2
-        mapRow,mapCol = tileMapLoc
+        mapRow,mapCol = relativeTileMapLoc
         startX, startY = mapRenderer.getMapStartLocation(screenSize, tileSize, len(renderedMap.tileList), len(renderedMap.tileList[0]))
         screenX = (mapCol - mapRow) * tileWidthHalf+ startX
         screenY = (mapCol + mapRow) * tileHeightHalf + startY
@@ -184,7 +180,9 @@ class Tile():
     @staticmethod
     def changeHighlight(tile, app, viewMapLoc, map, mapRenderer, screenSize, spriteDrawer):
         color = []
+        # print(tile.settlement)
         if tile.isHighlighted: color = Tile.defaultBorderColor
+        elif tile.settlement!=None: color = [0,255,0]
         else: color = Tile.highlightColor    
 
         tile.isHighlighted = not tile.isHighlighted

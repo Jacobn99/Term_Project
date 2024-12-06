@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from sprite import Sprite
-from PIL import Image
+import PIL as pil
 from resources import ResourceStack
+from ui import *
 
 
 class Builder():
@@ -50,6 +51,7 @@ class MovableUnit(BuildableUnit):
         self.location = newLoc
         newTile = app.map.tileList[newLoc[0],newLoc[1]]
         newTile.movableUnit = self
+        app.hasMoved.add(self)
         
     @abstractmethod
     def getProductionCost(self):
@@ -57,20 +59,23 @@ class MovableUnit(BuildableUnit):
     
 
 class Warrior(MovableUnit):
-    warriorSprite = Sprite(Image.open("sprites/warrior.png"))
+    warriorSprite = Sprite(pil.Image.open("sprites/warrior.png"))
     # in drawUnits, all units in given set will be drawn
     def __init__(self, civilization, app):
         self.civilization = civilization
         self.app = app
         self.location = None
         self.sprite = Warrior.warriorSprite
-        self.productionCost = 30
+        self.productionCost = 0
+        self.hp = 100
+        self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
+        self.attackDamage = 25
 
     def getProductionCost(self):
         return self.productionCost
 
-    def instantiate(self, spawnTile):
-        self.location = spawnTile
+    def instantiate(self, spawnLoc):
+        self.location = spawnLoc
         row,col = self.location
         tile = self.app.map.tileList[row, col]
         tile.movableUnit = self
@@ -82,26 +87,50 @@ class Warrior(MovableUnit):
     def getLocation(self):
         return self.location
     
+    def getTileScreenLocation(self,app):
+        row,col = self.location
+        tile = app.map.tileList[row,col]
+        relativeLoc = tile.getRelativeLoc(tile.row,tile.col,app.map)
+        
+        return tile.mapToScreenCords(relativeLoc, tile.getSize(), (app.width,app.height), app.map.getRenderedMap(), app.mapRenderer)
+    
     def getSprite(self):
         return self.sprite
     
-    # def move(self, newLoc):
-    #     oldRow,oldCol = self.location
-    #     tile = self.app.map.tileList[oldRow,oldCol]
-    #     tile.movableUnit = None
-    #     self.location = newLoc
-    #     newTile = self.app.map.tileList[newLoc[0],newLoc[1]]
-    #     newTile.movableUnit = self
+    def displayHP(self, app):
+        self.updateHP()
+        print('displaying :(')
+        self.hpLabel.display(app)
+
+    def hideHPDisplay(self,app):
+        print('got here hiding now')
+        self.hpLabel.removeAll(app)
+
+    def getHPLabel(self):
+        return self.hpLabel
+
+    def updateHP(self):
+        if self.hp <= 0: self.die()
+        else:
+            self.hpLabel.setText(f'HP:{self.hp}')
+            self.hpLabel.x, self.hpLabel.y = self.getTileScreenLocation(app) 
     
-    def getSpriteLoc(self):
-        # numOfResources = len(resources)
-        # tileWidth, tileHeight = self.tile.getSize()
-        relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
-                                                              self.app.currentViewRow, self.app.currentViewCol)
+    def changeHP(self, dHP):
+        self.hp += dHP
+        self.updateHP()
+
+    def getHP(self):
+        return self.hp
+    
+    def die(self):
+        row,col = self.location
+        tile = app.map.tileList[row,col]
+
+        self.hpLabel.removeAll()
+        self.hpLabel = None
+        self.civilization = None
+        tile.movableUnit = None
+        if self in self.app.drawableUnits: self.app.drawableUnits.remove(self)
         
-        x,y = self.tile.mapToScreenCords((relativeRow, relativeCol), self.tile.getSize(), 
-                                                    (self.app.width, self.app.height), self.app.map.getRenderedMap(), 
-                                                    self.app.mapRenderer)
-        return x,y
 
         

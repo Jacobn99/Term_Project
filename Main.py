@@ -42,7 +42,6 @@ def onAppStart(app):
     app.ignorableColor = (255,255,255)
     app.tileImage = pil.Image.open("sprites/TileShape.png")
     app.spriteDrawer = SpriteDrawer(app, (app.width,app.height), app.imgName)
-    app.currentTile = None
     app.resourceIcons = set()
     app.tileSize = (100,50)
     app.isMoving = False
@@ -50,15 +49,21 @@ def onAppStart(app):
     app.prevClickTile = None
     app.tileHeight,app.tileWidth = app.tileImage.size
     app.renderedUI = []
-
     app.players = [Civilization(), Civilization()]
     app.currentPlayerID = 0
 
-    app.gameManager.startGame(app)
-    
+    app.currentTile = None
+    app.currentUnit = None
+    app.lastClickedUnit = None
+    app.hasMoved = set()
+
+    app.timedUI = dict()    
     app.interactableUI = set()
 
-    
+    app.unitTypes = {'warrior' : Warrior}
+
+    app.gameManager.startGame(app)
+
     initializeExitMethods(app)
 
 def initializeExitMethods(app):
@@ -106,36 +111,55 @@ def drawResourceIcons(app):
                 
 def onMouseMove(app, mouseX,mouseY):
     mapLoc = app.gameManager.getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
+    hoveredUnit = None
 
     if mapLoc != app.prevHoveredTileLoc and app.prevHoveredTileLoc != None: 
         prevRow, prevCol = app.prevHoveredTileLoc
         Tile.changeHighlight(app.map.tileList[prevRow, prevCol], app, (app.currentViewRow, app.currentViewCol), 
                              app.map, app.mapRenderer, (app.width,app.height), app.spriteDrawer)
         app.prevHoveredTileLoc = None
-    if mapLoc != None and mapLoc != app.prevHoveredTileLoc:
+    if mapLoc != None:
         row, col = mapLoc
-        app.currentTile = (row,col)
-        app.prevHoveredTileLoc = (row,col)
-        t = app.map.tileList[row,col]
-        # print(t, (t.row,t.col))
-        Tile.changeHighlight(app.map.tileList[row, col], app, (app.currentViewRow, app.currentViewCol), 
-                             app.map, app.mapRenderer, (app.width,app.height), app.spriteDrawer)
+
+        tile = app.map.tileList[row,col]
+        if mapLoc != app.prevHoveredTileLoc:
+            app.prevHoveredTileLoc = (row,col)
+            t = app.map.tileList[row,col]
+            Tile.changeHighlight(app.map.tileList[row, col], app, (app.currentViewRow, app.currentViewCol), 
+                                app.map, app.mapRenderer, (app.width,app.height), app.spriteDrawer)
+        
+        if tile.movableUnit != None:
+            hoveredUnit = tile.movableUnit
+
+    if app.currentUnit != None and hoveredUnit != app.currentUnit:
+        app.currentUnit.hideHPDisplay(app)
+
+    elif hoveredUnit != None and mapLoc!=app.currentTile:
+        hoveredUnit.displayHP(app)
+
+    app.currentUnit = hoveredUnit
+    
+    if mapLoc == None: app.currentTile = None
+    else: app.currentTile = (row,col)
         
 def onMousePress(app, mouseX,mouseY):
+    pauseInteractables = False
 
-    currentPlayer = app.players[app.currentPlayerID]
-
-    # print(app.interactableUI)
     for ui in app.interactableUI.copy():
         if ui.inBounds(mouseX,mouseY): ui.execute(app)
+        pauseInteractables = True
 
     for ui in app.clickOffExitUI.copy():
         if not ui.inBounds(mouseX,mouseY): ui.removeAll(app)
 
     if app.currentTile != None:
-        print('clicked tile')
         tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
-        if tile.movableUnit != None:
+        currentUnit = tile.movableUnit
+
+        if currentUnit != None:
+            if app.lastClickedUnit not in app.hasMoved and app.lastClickedUnit != None and currentUnit != app.lastClickedUnit and currentUnit.civilization != app.lastClickedUnit.civilization:
+                currentUnit.changeHP(-app.lastClickedUnit.attackDamage)
+                app.hasMoved.add(currentUnit)
             app.isMoving = True
             app.prevClickTile = tile
         elif app.isMoving and app.prevClickTile!=None:
@@ -146,8 +170,31 @@ def onMousePress(app, mouseX,mouseY):
         
         if tile.getType() == app.gameManager.getTileType('settlement_center'):
             tile.settlement.displayUI()
+        elif tile.settlement != None and tile.movableUnit == None and not pauseInteractables:
+            relativeRow, relativeCol = Tile.getRelativeLoc(tile.row, tile.col, app.map)
+            location = Tile.mapToScreenCords((relativeRow,relativeCol), tile.getSize(), (app.width,app.height), app.map.getRenderedMap(), app.mapRenderer)
+            
+            text = 'Place population?'
+            if tile in tile.settlement.harvestedTiles:
+                text = 'Remove population?'
+            
+            populationButton = PopulationButton(app.gameManager, location, (130, 50), 'darkSlateGray', 
+                                                None, tile, text = 'Place population?', textSize=13)
+            populationButton.display(app)
 
- 
+        app.lastClickedUnit = currentUnit
+
+def onStep(app):
+    garbage = set()
+    for ui in app.timedUI:
+        if app.timedUI[ui] <= 0 and ui in app.renderedUI:
+            ui.removeAll(app)
+            garbage.add(ui)
+        else: app.timedUI[ui] -= 1
+
+    for ui in garbage:
+        app.timedUI.pop(ui)
+
 def onKeyPress(app,key):
     currentPlayer = app.players[app.currentPlayerID]
 
@@ -156,16 +203,21 @@ def onKeyPress(app,key):
             row,col = app.currentTile
             settlement = Settlement(app, app.map.tileList[row,col], currentPlayer, app.mapRenderer)
             settlement.instantiate()
-            # print(len(currentPlayer.settlements))
     elif key == 'a':
         if app.currentTile != None:
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
             print(tile.getType())
-            print(tile.getRelativeLoc(app.map))
+            print(tile.getRelativeLoc(tile.row,tile.col,app.map))
             
-    elif key == 'd':
+    elif key == 'w':
         currentPlayer.settlements[0].builder.setUnit(Warrior(currentPlayer, app))
+
+    elif key == 'd':
+        if app.currentTile != None:
+            tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
+            warrior = Warrior(app.players[1], app)
+            warrior.instantiate((tile.row,tile.col))
 
     elif key == 'n':
         app.gameManager.endPlayerTurn(app)
@@ -186,7 +238,6 @@ def onKeyPress(app,key):
             types = List(Tile.tileTypes)    
             row,col = app.currentTile
             tile = app.map.tileList[row,col]
-            # tile.setType(types[int(key) - 1])
     elif key == 'up' and app.map.tileList.size!=0:
         tileSprite = Sprite(app.tileImage)
         app.currentViewRow += 1
@@ -207,5 +258,5 @@ def onKeyPress(app,key):
         app.currentViewCol -= 1
         app.gameManager.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, tileSprite.getSize())
-    
+
 runApp()
