@@ -3,6 +3,7 @@ from resources import ResourceStack
 import math
 import random
 from tile_types import *
+from buildable_units import Settler
 
 class GameManager:
 
@@ -13,17 +14,19 @@ class GameManager:
 
     def startGame(self, app):
         startLocs = []
-        for _ in range(len(app.players)):
-            startLocs.append(self.createRandomSpawnLocation(app))
 
         app.map = MapRenderer.generateRandomMap(app.mapRenderer, app, (app.mapRows,app.mapCols))
-        # app.map.tileList[0,0].changeSprite(Tile.defaultSprites['green_tile'],app)
+
+        for i in range(len(app.players)):
+            start = self.createRandomSpawnLocation(app)
+            startLocs.append(start)
+
+
         app.currentViewRow, app.currentViewCol = startLocs[0]
         app.rendereredMap = MapRenderer.render(app.map, app, (app.currentViewRow,app.currentViewCol), 
                                                (app.width,app.height), app.spriteDrawer, (app.tileWidth,app.tileHeight))
         
         self.initializeCivilizations(app, startLocs)
-
     def getAllTileTypes(self):
         return self.tileTypes
     
@@ -39,6 +42,8 @@ class GameManager:
             player = app.players[i]
             startLoc = startLocs[i]
             player.setSpawnLocation(startLoc)
+            settler = Settler(app.players[i], app)
+            settler.instantiate(startLoc)
     
     def createRandomSpawnLocation(self, app):
         mapRows, mapCols = (app.mapRows, app.mapCols)
@@ -58,27 +63,28 @@ class GameManager:
 
         print('Player Turn Ended')
 
-        # print(app.players[app.currentPlayerID])
-        # if len(app.players[app.currentPlayerID].settlements) > 0:
-        #     print(f'PlayerID: {app.currentPlayerID}, harvestedTile: {app.players[app.currentPlayerID].settlements[0].harvestedTiles}')
         self.changePlayer(app, app.players[app.currentPlayerID])
 
     def takeNextTurn(self, app):
         for civilization in app.players:
             civilization.updateAllYields()        
-        # print(f"Civilization - production:{app.players[0].yieldsByType[ResourceStack.ResourceTypes['production']]}, \
-        #         food: {app.players[0].yieldsByType[ResourceStack.ResourceTypes['food']]}")
+        
         for player in app.players:
+            print(player.settlements, player.isSettled)
+            if player.settlements == [] and player.isSettled:
+                print('GAME WON') 
+                app.win = True
             player.useProduction()
 
     def changePlayer(self, app, civilization):
+        app.hasMoved = set()
         app.currentViewRow = civilization.startRow
         app.currentViewCol = civilization.startCol
         
         app.currentViewRow += 1
         self.clearScreen(app)
         MapRenderer.render(app.map, app, (app.currentViewRow, app.currentViewCol), (app.width,app.height), app.spriteDrawer, (app.tileWidth,app.tileHeight))
-        app.hasMoved = set()
+        
 
     def clearScreen(self, app):
         app.img = self.loadScreen(app, None)

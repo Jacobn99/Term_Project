@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 
 
 class ResourceIcon:
-    # iconImgSize = 25
     labelImgSpacing = 5
     ImgSpacing = 28
     def __init__(self,tile, app):
@@ -11,7 +10,6 @@ class ResourceIcon:
         self.app = app
         self.imgSize = self.tile.getResources()[0].getType().getImage().size
         app.resourceIcons.add(self)
-        # self.resources = tile.getResources()
 
     def getResources(self):
         return self.tile.resources
@@ -21,8 +19,6 @@ class ResourceIcon:
         resources = self.getResources()
         numOfResources = len(resources)
         tileWidth, tileHeight = self.tile.getSize()
-        # relativeRow,relativeCol = self.tile.realToRelativeLoc(self.tile.row, self.tile.col, self.app.map,
-        #                                                       self.app.currentViewRow, self.app.currentViewCol)
 
         location = self.tile.getRelativeLoc(self.tile.row,self.tile.col, self.app.map)
         if location != None:
@@ -149,15 +145,8 @@ class ResourceStack:
         type = stack.getType()
         _yield = civilization.yieldsByType[type]
         _yield += stack.getAmount()
-        # print(_yield)
         civilization.yieldsByType[type] = _yield
     
     @staticmethod
     def addStackToSettlement(stack, settlement):
         ResourceStack.addStackToCivilization(stack, settlement)
-        # type = stack.getType()
-        # _yield = 0
-        # _yield = civilization.yieldsByType[type]
-        # _yield += stack.getAmount()
-        # # print(_yield)
-        # settlement.yieldsByType[type] = _yield

@@ -34,7 +34,6 @@ class Tile():
 
         if type != None:
             self.sprite = type.getDefaultSprite()
-        # self.settlementColorSprite = Tile.getRecoloredSprite(self.sprite, self.dSettlementColor)
 
     def __repr__(self):
         return f'Tile(row:{self.row},col:{self.col})'
@@ -57,7 +56,6 @@ class Tile():
                 resource.setAmount(resource.getAmount() + resourceStack.getAmount())
                 return
         
-        # print(f'resourceStack:{resourceStack}')
         self.resources.append(resourceStack)
         self.LoadIcon(app)
 
@@ -68,12 +66,10 @@ class Tile():
     # Changes sprite without making an alias
     def changeSprite(self, newSprite, app, redraw = False):
         self.sprite = newSprite
-        # if self.settlement!=None: self.settlementColorSprites = self.getRecoloredSprite(self.sprite, self.dSettlementColor)
         if app.map != None and redraw != False: Tile.redrawTile(self, (app.currentViewRow,app.currentViewCol), app.spriteDrawer, 
         (app.width, app.height), app.map, app.mapRenderer)
 
     def getSprite(self):
-        # if self.settlement!=None: return self.getRecoloredSprite(self.sprite, self.dSettlementColor)
         return self.sprite
     
     def getSize(self):
@@ -81,7 +77,6 @@ class Tile():
     
     def setType(self,type,app):
         self.type = type
-        # self.sprite = type.getDefaultSprite()
         self.changeSprite(type.getDefaultSprite(),app, redraw = True)
 
         Tile.implementTypeResources(self,app)
@@ -90,7 +85,6 @@ class Tile():
         return self.type
 
     def getRecoloredSprite(self, sprite, dColor, border = True):
-        # if self.settlementColorSprite == None:
         data = sprite.getData()
         rows, cols = len(data), len(data[0])
         for row in range(rows):
@@ -99,9 +93,6 @@ class Tile():
                     for i in range(3):
                         value = int(data[row,col,i])
                         data[row,col,i] = (value + dColor[i])%255
-                    # data[row,col,0] = (data[row,col,0] + dColor[0])%255
-                    # data[row,col,1] = (data[row,col,1] + dColor[1])%255
-                    # data[row,col,2] = (data[row,col,2] + dColor[2])%255
         
         newSprite = Sprite(Image.fromarray(data[:,:,:3], mode = "RGB"))
         if border: newSprite = self.changeSpriteBorder(newSprite, [0,0,20])
@@ -192,8 +183,6 @@ class Tile():
     @staticmethod
     def getRelativeLoc(row,col, map):
             renderedMap = map.getRenderedMap()
-            # print(renderedMap.lowerY, self.row, renderedMap.upperY)
-            # print(renderedMap.lowerX, self.col, renderedMap.upperX)
             if (renderedMap.lowerY<=row<renderedMap.upperY) and (renderedMap.lowerX <=col<renderedMap.upperX):
                 return row - renderedMap.lowerY, col - renderedMap.lowerX
             else: return None

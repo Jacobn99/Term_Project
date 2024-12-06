@@ -1,7 +1,6 @@
 from cmu_graphics import *
 from abc import ABC, abstractmethod
 import PIL as pl
-# from buildable_units import *
 
 
 # Class has abstract methods for debugging purposes
@@ -51,7 +50,6 @@ class drawableUI(ABC):
         if exitMethod != None: app.exitMethodsToSet[exitMethod].remove(self)
     
     def display(self,app):
-        # print('called')
         exitMethod = self.getExitMethod()
 
         if self not in app.renderedUI:
@@ -173,7 +171,7 @@ class PopulationButton(Button):
         self.exitMethod = 'click off'
         self.textSize = textSize
         self.tile = tile
-        self.label = CustomLabel('Population Placed', 30, (app.width//2, 50), color = 'gold', time = 30, bold = True)
+        self.label = CustomLabel('Population Placed', 10, (app.width//2, 50), color = 'gold', time = 30, bold = True)
 
         if self.parentUI != None:
             parentUI.elements.add(self)
@@ -183,10 +181,7 @@ class PopulationButton(Button):
     def execute(self, app):
         if self.tile.civilization == app.players[app.currentPlayerID]:
             settlement = self.tile.settlement
-            if self.tile not in settlement.harvestedTiles: 
-                self.label.display(app)
-                settlement.harvestedTiles.add(self.tile)
-            else: settlement.harvestedTiles.remove(self.tile)
+            settlement.placePopulation(self.tile, app, ui = self)
 
         self.removeAll(app)
 
@@ -211,7 +206,7 @@ class SettlementButton(Button):
         app.exitMethodsToSet[self.exitMethod].add(self)
     
     def execute(self, app):
-        self.settler.createSettlement
+        self.settler.createSettlement()
         self.removeAll(app)
 
 
@@ -225,28 +220,30 @@ class SettlementUI(drawableUI):
         self.topBorder = app.height//2 - self.backHeight//2
         self.exitMethod = 'click off'
         self.settlement = settlement
-        self.productionButton = Button(self.gameManager, (self.leftBorder + self.backWidth//3, self.topBorder + self.backHeight//2), 
-                             (100,100), 'brown', self, self.displayProductionMenu)
+        self.productionButton = Button(self.gameManager, (self.leftBorder + self.backWidth//2 - 75, self.topBorder - 50), 
+                             (150,50), 'brown', self, self.displayProductionMenu, text="Production Menu", textSize = 15)
         self.interactable = False
         self.productionMenu = ProductionMenu(app, self.settlement, self.gameManager)
 
         app.exitMethodsToSet[self.exitMethod].add(self)
-        self.initializeLabelVariables()
+        self.initializeLabelVariables(app)
 
     def displayProductionMenu(self,app):
         self.productionMenu.display(app)
 
-    def initializeLabelVariables(self):
+    def initializeLabelVariables(self, app):
         # Label variables
-        self.resourceLabelXFromEdge = 10
-        self.resourceLabelYSpacing = 10
+        self.resourceLabelXFromEdge = app.width//2
+        self.resourceLabelYSpacing = 75
 
     def drawLabels(self):
         i = 0
         for resource in self.settlement.yieldsByType:
             drawLabel(f'{resource.getName()}: {self.settlement.yieldsByType[resource]}', 
-                      self.leftBorder + self.resourceLabelXFromEdge, self.topBorder + (i+1)*self.resourceLabelYSpacing)
+                      self.resourceLabelXFromEdge, self.topBorder + (i+1)*self.resourceLabelYSpacing, size = 30)
             i+=1
+        if self.settlement.builder.unit!=None:
+            drawLabel(f'Production Remaining Until Unit Made: {self.settlement.builder.getCostRemaining()}', self.resourceLabelXFromEdge, self.topBorder + (i+1)*self.resourceLabelYSpacing, size = 15)
 
     def getExitMethod(self):
         return self.exitMethod
@@ -273,6 +270,7 @@ class SettlementUI(drawableUI):
     def execute(self):
         pass
 
+
 class ProductionOptionButton(Button):
     def __init__(self, gameManager, location, size, color, parentUI, unitStr):
         self.parentUI = parentUI
@@ -293,13 +291,15 @@ class ProductionOptionButton(Button):
         return 'ProductionOptionButton'
     
     def execute(self, app):
-        # print('here')
         unitClass = app.unitTypes[self.unitStr]
         unit = unitClass(self.parentUI.settlement.civilization, app)
         self.parentUI.startMakingUnit(app, unit)
 
 
 class ProductionMenu(drawableUI):
+    unitIcons = {'warrior' : pl.Image.open('sprites/warrior.png'), 'settler': pl.Image.open('sprites/settler.png'), 
+                 'spearman' : pl.Image.open('sprites/spearman.png')}
+
     def __init__(self, app, settlement, gameManager):
         self.gameManager = gameManager
         self.elements = set()
@@ -310,10 +310,9 @@ class ProductionMenu(drawableUI):
         self.exitMethod = 'click off'
         self.settlement = settlement
         self.interactable = False
-        self.unitIcons = {'warrior' : pl.Image.open('sprites\warrior.png')}
         self.currentUnit = None
 
-        self.iconSpacing = 100
+        self.iconSpacing = 75
         self.heading = 50
 
         self.intitializeButtons(app)
@@ -322,20 +321,23 @@ class ProductionMenu(drawableUI):
         app.exitMethodsToSet[self.exitMethod].add(self)
 
     def intitializeButtons(self, app):
-        for name in self.unitIcons:
-            image = self.unitIcons[name]
+        i = 0
+        for name in ProductionMenu.unitIcons:
+            image = ProductionMenu.unitIcons[name]
             button = ProductionOptionButton(self.gameManager, (self.leftBorder + self.backWidth//2 - image.size[0]//2, 
-                      self.topBorder + self.heading), image.size, None, self, name)
+                      self.topBorder + self.heading + self.iconSpacing * i), image.size, None, self, name)
+            i+=1
             
     def startMakingUnit(self, app, unit):
-        # unit = unitClass(self.settlement.civilization, app)
         self.settlement.builder.setUnit(unit)
 
     def drawUnitOptions(self, app):
-        for icon in self.unitIcons:
-            image = self.unitIcons[icon]
-            drawImage(self.unitIcons[icon].filename, self.leftBorder + self.backWidth//2 - image.size[0]//2, 
-                      self.topBorder + self.heading)
+        i = 0
+        for icon in ProductionMenu.unitIcons:
+            image = ProductionMenu.unitIcons[icon]
+            drawImage(ProductionMenu.unitIcons[icon].filename, self.leftBorder + self.backWidth//2 - image.size[0]//2, 
+                      self.topBorder + self.heading + self.iconSpacing * i)
+            i+=1
 
 
     def getExitMethod(self):
@@ -356,6 +358,8 @@ class ProductionMenu(drawableUI):
     def drawAll(self, app):
         self.drawBackground(app)
         self.drawUnitOptions(app)
+        drawLabel('Pick A Unit', self.leftBorder + self.backWidth//2, self.topBorder + 15, size = 20)
+
         
     def drawBackground(self, app):
         drawRect(self.leftBorder, app.height//2 - self.backHeight//2, self.backWidth, self.backHeight, fill = 'gray')

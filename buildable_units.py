@@ -3,7 +3,6 @@ from sprite import Sprite
 import PIL as pil
 from resources import ResourceStack
 from ui import *
-from settlement import Settlement
 
 
 class Builder():
@@ -20,6 +19,7 @@ class Builder():
             if self.costRemaining <= 0: 
                 self.costRemaining = 0
                 self.unit.instantiate((self.settlement.row - 1, self.settlement.col))
+                self.unit = None
             print(f'costRemaining: {self.costRemaining}')
 
 
@@ -50,22 +50,26 @@ class MovableUnit(BuildableUnit):
             oldRow,oldCol = self.location
             tile = self.app.map.tileList[oldRow,oldCol]
             tile.movableUnit = None
-            self.location = newLoc
+            self.setLocation(newLoc)
             newTile = app.map.tileList[newLoc[0],newLoc[1]]
             newTile.movableUnit = self
 
             app.hasMoved.add(self)
+            print('moving')
 
     
     def getProductionCost(self):
         return self.productionCost
 
     def instantiate(self, spawnLoc):
-        self.location = spawnLoc
+        self.setLocation(spawnLoc)
         row,col = self.location
         tile = self.app.map.tileList[row, col]
         tile.movableUnit = self
         self.drawUnit()
+
+    def setLocation(self, newLoc):
+        self.location = newLoc
 
     def drawUnit(self):
         self.app.drawableUnits.append(self)
@@ -116,6 +120,10 @@ class MovableUnit(BuildableUnit):
         tile.movableUnit = None
         if self in self.app.drawableUnits: self.app.drawableUnits.remove(self)
         self.isAlive = False
+
+    @abstractmethod
+    def getType(self):
+        pass
     
 
 class Warrior(MovableUnit):
@@ -126,17 +134,45 @@ class Warrior(MovableUnit):
         self.app = app
         self.location = None
         self.sprite = Warrior.warriorSprite
-        self.productionCost = 0
+        self.productionCost = 5
         self.hp = 100
         self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
         self.attackDamage = 35
         self.isAlive = True
         self.isOffensive = True
+        self.type = Warrior
 
     def attack(self, otherUnit):
         if self not in self.app.hasMoved:
             otherUnit.changeHP(-self.app.lastClickedUnit.attackDamage, app)
             self.app.hasMoved.add(self)
+    
+    def getType(self):
+        return self.type
+
+class Spearman(MovableUnit):
+    spearmanSprite = Sprite(pil.Image.open("sprites/Spearman.png"))
+    # in drawUnits, all units in given set will be drawn
+    def __init__(self, civilization, app):
+        self.civilization = civilization
+        self.app = app
+        self.location = None
+        self.sprite = Spearman.spearmanSprite
+        self.productionCost = 15
+        self.hp = 100
+        self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
+        self.attackDamage = 50
+        self.isAlive = True
+        self.isOffensive = True
+        self.type = Spearman
+
+    def attack(self, otherUnit):
+        if self not in self.app.hasMoved:
+            otherUnit.changeHP(-self.app.lastClickedUnit.attackDamage, app)
+            self.app.hasMoved.add(self)
+    
+    def getType(self):
+        return self.type
 
 
 class Settler(MovableUnit):
@@ -147,17 +183,19 @@ class Settler(MovableUnit):
         self.app = app
         self.location = None
         self.sprite = Settler.settlerSprite
-        self.productionCost = 0
+        self.productionCost = 15
         self.hp = 10
         self.hpLabel = CustomLabel(f'HP:{self.hp}', 20, (app.width//2,app.height//2), color = 'red')
         self.isAlive = True
         self.isOffensive = False
         self.attackDamage = 0
         self.settlementButton = None
+        self.type = Settler
 
     def getSettlementButton(self):
         if self.settlementButton == None:
-            self.settleButton = SettlementButton(self.app.gameManager, self.location, (200,100), 'gray', None, self, 'Settle?', 20)
+            self.settlementButton = SettlementButton(self.app.gameManager, self.location, (200,100), 'gray', None, self, 'Settle?', 20)
+        return self.settlementButton
 
     def displaySettlementButton(self):
         self.settlementButton.display(app)
@@ -165,10 +203,10 @@ class Settler(MovableUnit):
     def hideSettlementButton(self):
         self.getHPLabel().removeAll(app)
 
+    def getType(self):
+        return self.type
 
-
-    def makeSettlement(self):
-        tile = self.map.tileList[self.location[0],self.location[1]]
-        settlement = Settlement(self.app, tile, self.civilization, self.app.mapRenderer)
-        settlement.instantiate()
+    def createSettlement(self):
+        tile = self.app.map.tileList[self.location[0],self.location[1]]
+        self.civilization.createSettlement(tile,self.app)
         self.die(self.app)

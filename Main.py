@@ -15,11 +15,10 @@ from ui import *
 from tile_types import TileType
 
 
-# Go in numpy and make it so only the part of the map you can see if being rendered at one time 
-# (edit the map being used with numpy to include only what you can see)
-
 def onAppStart(app):
     app.gameManager = GameManager()
+    app.win = False
+
 
     app.width = 600
     app.height = 600
@@ -60,7 +59,7 @@ def onAppStart(app):
     app.timedUI = dict()    
     app.interactableUI = set()
 
-    app.unitTypes = {'warrior' : Warrior}
+    app.unitTypes = {'warrior' : Warrior, 'settler' : Settler, 'spearman' : Spearman}
 
     app.gameManager.startGame(app)
 
@@ -76,6 +75,9 @@ def redrawAll(app):
     drawUnits(app)
     drawResourceIcons(app)
     drawUI(app)
+
+    if app.win == True:
+        drawLabel("Game Ended", app.width//2, app.height//2, fill = 'gold', size = 50, bold = True)
     
 def drawUI(app):
     for ui in app.renderedUI:
@@ -110,6 +112,7 @@ def drawResourceIcons(app):
             i+=1
                 
 def onMouseMove(app, mouseX,mouseY):
+    if app.win:return
     mapLoc = app.gameManager.getTile(app, mouseX, mouseY, (app.width,app.height), app.map, True)
     hoveredUnit = None
 
@@ -137,12 +140,14 @@ def onMouseMove(app, mouseX,mouseY):
     elif hoveredUnit != None and mapLoc!=app.currentTile:
         hoveredUnit.displayHP(app)
 
+
     app.currentUnit = hoveredUnit
     
     if mapLoc == None: app.currentTile = None
     else: app.currentTile = (row,col)
         
 def onMousePress(app, mouseX,mouseY):
+    if app.win: return
     pauseInteractables = False
     currentPlayer = app.players[app.currentPlayerID]
 
@@ -156,25 +161,32 @@ def onMousePress(app, mouseX,mouseY):
     if app.currentTile != None:
         tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
         currentUnit = tile.movableUnit
+        dontMove = False
 
-        if currentUnit != None:
-            if (app.lastClickedUnit not in app.hasMoved 
-                and app.lastClickedUnit != None
-                and app.lastClickedUnit
-                and currentUnit != app.lastClickedUnit 
-                and currentUnit.civilization != currentPlayer 
-                and app.lastClickedUnit.civilization
-                and app.lastClickedUnit.isOffensive):
+        # if currentUnit != None:
+        if (app.lastClickedUnit not in app.hasMoved 
+            and app.lastClickedUnit != None
+            and app.lastClickedUnit
+            and app.lastClickedUnit.civilization
+            and app.lastClickedUnit.isOffensive):
+            
+            if (currentUnit != None and currentUnit != app.lastClickedUnit 
+                and currentUnit.civilization != currentPlayer):
                 app.lastClickedUnit.attack(currentUnit)
-            app.isMoving = True
-            app.prevClickTile = tile
-        elif app.isMoving and app.prevClickTile != None:
-            unit = app.prevClickTile.movableUnit
-            unit.move(app, app.currentTile)
-            app.isMoving = False
-            app.prevClickTile = None
+                dontMove = True
         
-        if tile.getType() == app.gameManager.getTileType('settlement_center'):
+            elif (isinstance(tile.getType(),SettlementCenter)):
+                app.lastClickedUnit.attack(tile.settlement)
+                dontMove = True
+
+        if app.isMoving and app.prevClickTile != None and not dontMove:
+            unit = app.prevClickTile.movableUnit
+            if unit != None and unit.civilization == currentPlayer:
+                unit.move(app, app.currentTile)
+                app.isMoving = False
+                app.prevClickTile = None
+        
+        if tile.getType() == app.gameManager.getTileType('settlement_center') and tile.civilization == currentPlayer:
             tile.settlement.displayUI()
         elif tile.settlement != None and tile.movableUnit == None and not pauseInteractables:
             relativeRow, relativeCol = Tile.getRelativeLoc(tile.row, tile.col, app.map)
@@ -188,6 +200,8 @@ def onMousePress(app, mouseX,mouseY):
                                                 None, tile, text = text, textSize=13)
             populationButton.display(app)
 
+        app.isMoving = True
+        app.prevClickTile = tile
         app.lastClickedUnit = currentUnit
 
 def onStep(app):
@@ -203,12 +217,21 @@ def onStep(app):
 
 def onKeyPress(app,key):
     currentPlayer = app.players[app.currentPlayerID]
+    if app.currentTile!=None: tile = app.map.tileList[app.currentTile[0], app.currentTile[1]]
+    else: tile = None
+
 
     if key == 's':
         if app.currentTile != None:
-            row,col = app.currentTile
-            settlement = Settlement(app, app.map.tileList[row,col], currentPlayer, app.mapRenderer)
-            settlement.instantiate()
+            if (isinstance(tile.movableUnit, Settler) and
+            tile.movableUnit.civilization == currentPlayer):
+                tile.movableUnit.getSettlementButton().display(app)
+            else:
+                row,col = app.currentTile
+                settlement = Settlement(app, app.map.tileList[row,col], currentPlayer, app.mapRenderer)
+                settlement.instantiate()
+            
+
     elif key == 'a':
         if app.currentTile != None:
             row,col = app.currentTile
@@ -217,7 +240,7 @@ def onKeyPress(app,key):
             print(tile.getRelativeLoc(tile.row,tile.col,app.map))
             
     elif key == 'w':
-        currentPlayer.settlements[0].builder.setUnit(Warrior(currentPlayer, app))
+        currentPlayer.settlements[0].builder.setUnit(Settler(currentPlayer, app))
 
     elif key == 'd':
         if app.currentTile != None:
@@ -237,8 +260,6 @@ def onKeyPress(app,key):
                    settlement.harvestedTiles.add(tile)
                else: settlement.harvestedTiles.remove(tile)
             
-            # tile = app.map.tileList[row,col]
-
     elif key.isdigit() and 1 <=int(key) <= 3:
         if app.currentTile != None:
             types = List(Tile.tileTypes)    

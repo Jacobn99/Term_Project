@@ -1,9 +1,11 @@
 from resources import ResourceStack
 import numpy as np
+from settlement import Settlement
 
 class Civilization:
     id = -1
     def __init__(self):
+        self.isSettled = False
         self.settlements = []
         self.yieldsByType = {ResourceStack.ResourceTypes['production'] : 0, 
                              ResourceStack.ResourceTypes['food'] : 0}
@@ -23,6 +25,7 @@ class Civilization:
     
     def useProduction(self):
         for settlement in self.settlements:
+            self.isSettled = True
             builder = settlement.builder
             settlement.updateYields()
             # print(settlement.yieldsByType)
@@ -39,6 +42,9 @@ class Civilization:
             result = np.union1d(result, settlement.settlementTiles.flatten())
         return result
     
+    def createSettlement(self, tile, app):
+        settlement = Settlement(app, tile, self, app.mapRenderer)
+        settlement.instantiate()
 
     def updateAllYields(self):
         self.resetYieldsByType()
@@ -49,9 +55,6 @@ class Civilization:
                 if type in self.yieldsByType:
                     self.yieldsByType[type] += settlement.yieldsByType[type]
 
-    # def updateAllProduction
-
-
     def addYield(self, stack):
         ResourceStack.addStackToCivilization(stack, self)
 
@@ -60,9 +63,14 @@ class Civilization:
         else: return self.yieldsByType[resourceType]
 
     def addSettlement(self, settlement):
-        self.settlements.append(settlement)
+        self.settled = True
+        if settlement not in self.settlements: self.settlements.append(settlement)
     
-    def removeSettlement(self, settlement):
+    def removeSettlement(self, settlement, app):
         self.settlements.remove(settlement)
+        print(f'len: {len(self.settlements)}')
+        if len(self.settlements) <= 0: 
+            app.win = True
+            print(f'win: {app.win}')
 
     

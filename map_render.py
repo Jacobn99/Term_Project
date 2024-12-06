@@ -21,18 +21,11 @@ class MapRenderer:
         relativeCol = 0
         m = np.zeros((len(tileList), len(tileList[0])))
         l = []
-
-        # print(f"lowerY: {renderedMap.lowerY}, upperY: {renderedMap.upperY}")
-        # print(f"lowerX: {renderedMap.lowerX}, upperX: {renderedMap.upperX}")
-        
         renderer = MapRenderer()
         i = 0
-        # --------- this code still breaks things ---------
+
         for relativeRow in range(renderedRows):
             for relativeCol in range(renderedCols):
-                # realRow = relativeRow + (viewMapRow - len(tileList)//2)
-                # realCol = relativeCol + (viewMapCol - len(tileList[0])//2)
-                # tile = tileList[realRow, realCol]
                 tile = renderedMap.tileList[relativeRow, relativeCol]
                 tileSprite = tile.getSprite()
                 l.append(tile)
@@ -45,16 +38,6 @@ class MapRenderer:
         a = np.array(l)
         a = a.reshape(renderedRows, renderedCols)
         m[renderedMap.lowerY: renderedMap.upperY, renderedMap.lowerX: renderedMap.upperX] = 1
-
-        #-------DEBUG CODE-------
-        # print(a)
-
-        # print(m)
-        # print(map.getRenderedMap().tileList)
-        # print(f"RenderedRows: {renderedRows}, RenderedCols: {renderedCols}")
-        # print(f"'a' row: {len(a)}, 'a' cols: {len(a[0])}")
-        # print(f"i: {i}")
-        #------------------------
         return renderedMap
     
     def generateRandomMap(self, app, size):
@@ -115,11 +98,9 @@ class MapRenderer:
     @staticmethod
     def createRenderedMap(map, app, viewMapLoc, screenSize, tileSize):
         tileList = map.tileList
-        # m = np.zeros((len(tileList), len(tileList[0])))
         rows,cols = len(tileList), len(tileList[0])
 
         y, x = viewMapLoc
-        # print(f'x:{x},y:{y}')
         renderedRows, renderedCols = app.viewRowSize, app.viewColSize        
         xLowerBound = x - renderedCols//2
         yLowerBound = y - renderedRows//2
