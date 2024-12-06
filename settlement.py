@@ -24,7 +24,7 @@ class Settlement():
                              ResourceStack.ResourceTypes['food'] : 0}
         self.settlementUI = SettlementUI(app, self, app.gameManager)
         self.populationProgress = 0
-        self.hp = 1
+        self.hp = 150
         self.label = CustomLabel(f'Settlement Attacked! (HP:{self.hp})', 30, (app.width//2, 50), color = 'red', time = 15, bold = True)
 
 

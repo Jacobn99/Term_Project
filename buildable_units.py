@@ -20,8 +20,6 @@ class Builder():
                 self.costRemaining = 0
                 self.unit.instantiate((self.settlement.row - 1, self.settlement.col))
                 self.unit = None
-            print(f'costRemaining: {self.costRemaining}')
-
 
     def getCostRemaining(self):
         return self.costRemaining
@@ -32,7 +30,6 @@ class Builder():
     def setUnit(self, unit):
         self.unit = unit
         self.costRemaining = unit.getProductionCost()
-        print(f'New unit under construction! (Cost: {self.costRemaining})')
 
     def getConstructing(self):
         return self.unit
@@ -55,8 +52,6 @@ class MovableUnit(BuildableUnit):
             newTile.movableUnit = self
 
             app.hasMoved.add(self)
-            print('moving')
-
     
     def getProductionCost(self):
         return self.productionCost

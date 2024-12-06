@@ -171,7 +171,6 @@ class Tile():
     @staticmethod
     def changeHighlight(tile, app, viewMapLoc, map, mapRenderer, screenSize, spriteDrawer):
         color = []
-        # print(tile.settlement)
         if tile.isHighlighted: color = Tile.defaultBorderColor
         elif tile.settlement!=None: color = [0,255,0]
         else: color = Tile.highlightColor    

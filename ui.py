@@ -171,7 +171,7 @@ class PopulationButton(Button):
         self.exitMethod = 'click off'
         self.textSize = textSize
         self.tile = tile
-        self.label = CustomLabel('Population Placed', 10, (app.width//2, 50), color = 'gold', time = 30, bold = True)
+        self.label = CustomLabel('Population Placed', 30, (app.width//2, 50), color = 'gold', time = 30, bold = True)
 
         if self.parentUI != None:
             parentUI.elements.add(self)

@@ -188,7 +188,7 @@ def onMousePress(app, mouseX,mouseY):
         
         if tile.getType() == app.gameManager.getTileType('settlement_center') and tile.civilization == currentPlayer:
             tile.settlement.displayUI()
-        elif tile.settlement != None and tile.movableUnit == None and not pauseInteractables:
+        elif tile.settlement != None and tile.movableUnit == None and not pauseInteractables and not isinstance(tile.getType(), SettlementCenter):
             relativeRow, relativeCol = Tile.getRelativeLoc(tile.row, tile.col, app.map)
             location = Tile.mapToScreenCords((relativeRow,relativeCol), tile.getSize(), (app.width,app.height), app.map.getRenderedMap(), app.mapRenderer)
             

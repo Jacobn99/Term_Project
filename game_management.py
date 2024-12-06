@@ -57,11 +57,8 @@ class GameManager:
         if app.currentPlayerID >= len(app.players) - 1:
             app.currentPlayerID = 0
             self.takeNextTurn(app)
-            print('Next Turn')
         else: 
             app.currentPlayerID +=1
-
-        print('Player Turn Ended')
 
         self.changePlayer(app, app.players[app.currentPlayerID])
 
@@ -70,9 +67,7 @@ class GameManager:
             civilization.updateAllYields()        
         
         for player in app.players:
-            print(player.settlements, player.isSettled)
             if player.settlements == [] and player.isSettled:
-                print('GAME WON') 
                 app.win = True
             player.useProduction()
 

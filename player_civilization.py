@@ -28,9 +28,7 @@ class Civilization:
             self.isSettled = True
             builder = settlement.builder
             settlement.updateYields()
-            # print(settlement.yieldsByType)
             builder.updateProgress()
-            # print(builder.getCostRemaining())
             
     def resetYieldsByType(self):
         for key in self.yieldsByType:
@@ -51,7 +49,6 @@ class Civilization:
         for settlement in self.settlements:
             settlement.harvestResources()
             for type in settlement.yieldsByType:
-                # print(key, settlement.yieldsByType[key])
                 if type in self.yieldsByType:
                     self.yieldsByType[type] += settlement.yieldsByType[type]
 
@@ -68,9 +65,7 @@ class Civilization:
     
     def removeSettlement(self, settlement, app):
         self.settlements.remove(settlement)
-        print(f'len: {len(self.settlements)}')
         if len(self.settlements) <= 0: 
             app.win = True
-            print(f'win: {app.win}')
 
     
